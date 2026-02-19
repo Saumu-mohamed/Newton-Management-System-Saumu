@@ -1,0 +1,568 @@
+/* =========================================
+   DESIGN SYSTEM - Production-Grade Utilities
+   ========================================= */
+
+@layer utilities {
+  /* SPACING & LAYOUT
+     ==================== */
+  .container-page {
+    @apply mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8;
+  }
+
+  .container-section {
+    @apply mx-auto max-w-6xl px-3 sm:px-4 md:px-6;
+  }
+
+  .content-wrapper {
+    @apply space-y-6 md:space-y-8;
+  }
+
+  /* GRID LAYOUTS
+     ==================== */
+  .grid-cards {
+    @apply grid gap-3 sm:gap-4 md:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .grid-cards-lg {
+    @apply grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3;
+  }
+
+  .grid-cards-dashboard {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4;
+  }
+
+  /* FLEX UTILITIES
+     ==================== */
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-start {
+    @apply flex items-center justify-start;
+  }
+
+  .flex-col-center {
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* TYPOGRAPHY HIERARCHY
+     ==================== */
+  .h1-display {
+    @apply text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight;
+  }
+
+  .h1-page {
+    @apply text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  .h2-section {
+    @apply text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight;
+  }
+
+  .h3-subsection {
+    @apply text-lg sm:text-xl font-semibold tracking-tight;
+  }
+
+  .body-lg {
+    @apply text-base leading-relaxed;
+  }
+
+  .body-md {
+    @apply text-sm leading-relaxed;
+  }
+
+  .body-sm {
+    @apply text-xs sm:text-sm leading-relaxed;
+  }
+
+  .label-lg {
+    @apply text-sm font-medium leading-tight;
+  }
+
+  .label-md {
+    @apply text-xs font-medium leading-tight;
+  }
+
+  .label-sm {
+    @apply text-xs font-semibold uppercase tracking-widest;
+  }
+
+  /* CARD STYLING
+     ==================== */
+  .card-elevated {
+    @apply bg-card border border-border/50 rounded-lg shadow-sm;
+  }
+
+  .card-interactive {
+    @apply bg-card border border-border/50 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  .card-outline {
+    @apply border border-border rounded-lg;
+  }
+
+  .card-subtle {
+    @apply bg-secondary/30 border border-border/30 rounded-lg;
+  }
+
+  .card-glass {
+    @apply bg-background/50 backdrop-blur-sm border border-border/50 rounded-lg;
+  }
+
+  /* BUTTONS & INTERACTIONS
+     ==================== */
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-xs {
+    @apply px-2.5 py-1 text-xs;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  .btn-outline {
+    @apply border border-border bg-background hover:bg-muted;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-muted text-foreground;
+  }
+
+  .btn-icon {
+    @apply flex-center h-9 w-9 rounded-lg transition-colors;
+  }
+
+  .btn-icon-sm {
+    @apply flex-center h-7 w-7 rounded-md transition-colors;
+  }
+
+  /* INPUT & FORM
+     ==================== */
+  .input-base {
+    @apply w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground transition-colors;
+  }
+
+  .input-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background;
+  }
+
+  .input-lg {
+    @apply px-4 py-3 text-base;
+  }
+
+  .input-sm {
+    @apply px-2.5 py-1.5 text-sm;
+  }
+
+  .input-error {
+    @apply border-destructive focus-visible:ring-destructive;
+  }
+
+  .form-group {
+    @apply flex flex-col gap-2;
+  }
+
+  .form-grid {
+    @apply grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* BADGE & STATUS
+     ==================== */
+  .badge-base {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary/10 text-primary;
+  }
+
+  .badge-success {
+    @apply bg-success/10 text-success;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning;
+  }
+
+  .badge-destructive {
+    @apply bg-destructive/10 text-destructive;
+  }
+
+  .badge-info {
+    @apply bg-info/10 text-info;
+  }
+
+  /* TABLES & DATA
+     ==================== */
+  .table-wrapper {
+    @apply w-full overflow-x-auto;
+  }
+
+  .table-responsive {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .table-header {
+    @apply bg-muted/50 border-b border-border;
+  }
+
+  .table-row {
+    @apply border-b border-border hover:bg-muted/40 transition-colors;
+  }
+
+  .table-cell {
+    @apply px-3 py-3 sm:px-4 text-left align-middle;
+  }
+
+  .table-cell-sm {
+    @apply px-2 py-2 sm:px-3;
+  }
+
+  /* SECTIONS & DIVIDERS
+     ==================== */
+  .section-header {
+    @apply flex-between gap-4 pb-4 border-b border-border mb-6;
+  }
+
+  .section-title {
+    @apply h3-subsection;
+  }
+
+  .divider {
+    @apply my-4 sm:my-6 border-t border-border;
+  }
+
+  .divider-vertical {
+    @apply mx-2 sm:mx-4 h-6 border-l border-border;
+  }
+
+  /* FOCUS & STATES
+     ==================== */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded-lg;
+  }
+
+  .focus-ring-sm {
+    @apply focus:outline-none focus:ring-1 focus:ring-primary;
+  }
+
+  .disabled-state {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .loading-state {
+    @apply animate-pulse;
+  }
+
+  /* SCROLLING & OVERFLOW
+     ==================== */
+  .scroll-horizontal {
+    @apply overflow-x-auto overflow-y-hidden;
+  }
+
+  .scroll-smooth {
+    @apply scroll-smooth;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* VISIBILITY & DISPLAY
+     ==================== */
+  .show-mobile {
+    @apply sm:hidden;
+  }
+
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  .show-tablet {
+    @apply hidden md:block;
+  }
+
+  .hide-tablet {
+    @apply md:hidden;
+  }
+
+  .show-desktop {
+    @apply hidden lg:block;
+  }
+
+  .hide-desktop {
+    @apply lg:hidden;
+  }
+
+  /* ELEVATION & SHADOWS
+     ==================== */
+  .shadow-xs {
+    @apply shadow-sm;
+  }
+
+  .shadow-base {
+    @apply shadow;
+  }
+
+  .shadow-md {
+    @apply shadow-md;
+  }
+
+  .shadow-lg {
+    @apply shadow-lg;
+  }
+
+  .shadow-blur {
+    @apply shadow-2xl shadow-primary/10;
+  }
+
+  /* BORDERS & CORNERS
+     ==================== */
+  .border-soft {
+    @apply border border-border/30;
+  }
+
+  .border-subtle {
+    @apply border border-border/10;
+  }
+
+  .rounded-xs {
+    @apply rounded-sm;
+  }
+
+  .rounded-base {
+    @apply rounded-lg;
+  }
+
+  .rounded-lg-plus {
+    @apply rounded-xl;
+  }
+
+  /* ANIMATION UTILITIES
+     ==================== */
+  .animate-in {
+    @apply animate-fade-in;
+  }
+
+  .animate-slide-left {
+    animation: slideLeft 0.3s ease-out;
+  }
+
+  .animate-slide-right {
+    animation: slideRight 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* RESPONSIVE FLEX
+     ==================== */
+  .flex-responsive {
+    @apply flex flex-col gap-3 sm:flex-row sm:gap-4 md:gap-5;
+  }
+
+  .flex-responsive-wrap {
+    @apply flex flex-wrap gap-2 sm:gap-3;
+  }
+
+  /* BACKGROUNDS
+     ==================== */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-accent;
+  }
+
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary to-muted;
+  }
+
+  .bg-mesh {
+    @apply bg-background/50 backdrop-blur-xl;
+  }
+
+  /* TEXT UTILITIES
+     ==================== */
+  .text-muted {
+    @apply text-muted-foreground;
+  }
+
+  .text-subtle {
+    @apply text-muted-foreground/70;
+  }
+
+  .text-truncate {
+    @apply truncate;
+  }
+
+  .text-line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .text-line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* STACK UTILITIES
+     ==================== */
+  .stack-vertical {
+    @apply flex flex-col gap-3;
+  }
+
+  .stack-vertical-lg {
+    @apply flex flex-col gap-4 sm:gap-5 md:gap-6;
+  }
+
+  .stack-horizontal {
+    @apply flex flex-row gap-2 sm:gap-3;
+  }
+
+  .stack-horizontal-lg {
+    @apply flex flex-row gap-3 sm:gap-4 md:gap-5;
+  }
+
+  /* DATA STATES
+     ==================== */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 sm:py-16 md:py-20;
+  }
+
+  .empty-state-icon {
+    @apply h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mb-4;
+  }
+
+  .error-state {
+    @apply p-4 sm:p-5 rounded-lg border border-destructive/30 bg-destructive/5;
+  }
+
+  .success-state {
+    @apply p-4 sm:p-5 rounded-lg border border-success/30 bg-success/5;
+  }
+
+  .warning-state {
+    @apply p-4 sm:p-5 rounded-lg border border-warning/30 bg-warning/5;
+  }
+}
+
+/* KEYFRAME ANIMATIONS
+   ==================== */
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RESPONSIVE BEHAVIORS
+   ==================== */
+@media (max-width: 640px) {
+  .mobile-full-width {
+    @apply -mx-3 -mb-4;
+  }
+
+  .mobile-sticky {
+    @apply sticky bottom-0 z-40;
+  }
+
+  .mobile-stack {
+    @apply flex-col gap-3;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-grid {
+    @apply grid-cols-2;
+  }
+
+  .tablet-full {
+    @apply w-full;
+  }
+}
+
+@media (min-width: 1025px) {
+  .desktop-grid-3 {
+    @apply grid-cols-3;
+  }
+
+  .desktop-grid-4 {
+    @apply grid-cols-4;
+  }
+
+  .desktop-sidebar {
+    @apply max-w-xs;
+  }
+}

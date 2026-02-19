@@ -1,0 +1,32 @@
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from './AppSidebar';
+import { Header } from './Header';
+import { Outlet } from 'react-router-dom';
+
+/**
+ * Main application layout component with responsive sidebar and header
+ * Provides consistent structure across all protected pages
+ */
+export function AppLayout() {
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        {/* Collapsible sidebar - z-50 for mobile overlay */}
+        <AppSidebar />
+
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Fixed header - z-40 to stay above content but below modals */}
+          <Header />
+
+          {/* Main scrollable content */}
+          <main className="flex-1 overflow-auto bg-background">
+            <div className="container-page space-y-6">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
