@@ -143,20 +143,24 @@ export default function CollegeAdminDashboard() {
   const totalTarget = enrollmentByFaculty.reduce((sum, f) => sum + f.target, 0);
   const enrollmentPercentage = totalStudents / totalTarget * 100;
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-8 w-full animate-in fade-in duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
-          <h1 className="h1-page">College Admin Dashboard</h1>
-          <p className="body-md text-muted-foreground">Main Campus - Academic & Administrative Overview</p>
+          <h1 className="h1-page mb-1">College Admin Dashboard</h1>
+          <p className="body-md text-muted-foreground flex items-center gap-2">
+            Main Campus
+            <span className="w-1 h-1 rounded-full bg-border" />
+            Academic & Administrative Overview
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate('/reports')}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={() => navigate('/reports')}>
             <BarChart3 className="h-4 w-4 mr-2" />
-            Reports
+            Full Analytics
           </Button>
-          <Button size="sm" onClick={() => navigate('/calendar')}>
+          <Button className="rounded-xl shadow-lg shadow-primary/20" onClick={() => navigate('/calendar')}>
             <Calendar className="h-4 w-4 mr-2" />
-            Schedule
+            Schedule Board
           </Button>
         </div>
       </div>
@@ -188,26 +192,33 @@ export default function CollegeAdminDashboard() {
           icon={AlertTriangle} />
       </div>
       {/* Enrollment Progress */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="glass-premium overflow-hidden border-none shadow-premium">
+        <CardHeader className="pb-4 pt-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">Enrollment Target Progress</CardTitle>
-            <Badge variant="secondary">{enrollmentPercentage.toFixed(0)}% achieved</Badge>
+            <div>
+              <CardTitle className="text-lg font-bold tracking-tight">Enrollment Target Progress</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Academic Intake Status 2024/2025</p>
+            </div>
+            <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary border-none">{enrollmentPercentage.toFixed(0)}% ACHIEVED</Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="pb-8">
+          <div className="grid gap-6 md:grid-cols-2">
             {enrollmentByFaculty.map((faculty) =>
-              <div key={faculty.faculty} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{faculty.faculty}</span>
-                  <span className="text-muted-foreground">
-                    {faculty.students} / {faculty.target} students
+              <div key={faculty.faculty} className="space-y-3 p-4 rounded-2xl bg-white/50 border border-border/20 shadow-sm transition-all hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold tracking-tight">{faculty.faculty}</span>
+                  <span className="text-[10px] font-black text-muted-foreground uppercase">
+                    {faculty.students} / {faculty.target} STUDENTS
                   </span>
                 </div>
                 <Progress
                   value={faculty.students / faculty.target * 100}
-                  className="h-2" />
+                  className="h-2.5 shadow-inner bg-muted" />
+                <div className="flex justify-between items-center text-[10px] font-bold">
+                  <span className="text-primary">{(faculty.students / faculty.target * 100).toFixed(0)}% CAPACITY</span>
+                  <span className="text-muted-foreground tracking-widest uppercase">Target Meta</span>
+                </div>
               </div>
             )}
           </div>
@@ -322,110 +333,111 @@ export default function CollegeAdminDashboard() {
         </TabsContent>
       </Tabs>
       {/* Two Column Layout */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Fee Clearance Summary */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium">Fee Clearance Summary</CardTitle>
+        <Card className="border-none shadow-premium">
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-primary" />
+              Fee Clearance Summary
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Fully Cleared</span>
-              <div className="flex items-center gap-2">
-                <Progress value={62} className="w-24 h-2" />
-                <span className="text-sm font-medium">62%</span>
+          <CardContent className="space-y-5">
+            {[
+              { label: 'Fully Cleared', value: 62, color: 'text-green-600', bg: 'bg-green-600' },
+              { label: 'Partial Payment', value: 23, color: 'text-primary', bg: 'bg-primary' },
+              { label: 'Overdue', value: 10, color: 'text-destructive', bg: 'bg-destructive' },
+              { label: 'Pending', value: 5, color: 'text-muted-foreground', bg: 'bg-muted-foreground' }
+            ].map((item) => (
+              <div key={item.label} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-tight text-muted-foreground">{item.label}</span>
+                  <span className={`text-sm font-black ${item.color}`}>{item.value}%</span>
+                </div>
+                <Progress value={item.value} className="h-2 shadow-inner" />
               </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">Partial Payment</span>
-              <div className="flex items-center gap-2">
-                <Progress value={23} className="w-24 h-2" />
-                <span className="text-sm font-medium">23%</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-destructive">Overdue</span>
-              <div className="flex items-center gap-2">
-                <Progress value={10} className="w-24 h-2" />
-                <span className="text-sm font-medium text-destructive">10%</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Pending</span>
-              <div className="flex items-center gap-2">
-                <Progress value={5} className="w-24 h-2" />
-                <span className="text-sm font-medium">5%</span>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
         {/* Upcoming Events */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
+          <CardHeader className="pb-4 pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium">Upcoming Events & Exams</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => navigate('/calendar')}>
-                <Calendar className="h-4 w-4 mr-1" />
-                View Calendar
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Administrative Calendar
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/5 h-7 px-2" onClick={() => navigate('/calendar')}>
+                VIEW ALL
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {upcomingEvents.map((event) =>
-                <div key={event.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-2 h-2 rounded-full ${event.type === 'exam' ?
-                        'bg-red-500' :
-                        event.type === 'deadline' ?
-                          'bg-yellow-500' :
-                          event.type === 'meeting' ?
-                            'bg-blue-500' :
-                            'bg-green-500'}`
-                      } />
-                    <div>
-                      <span className="text-sm font-medium">{event.event}</span>
-                      <p className="text-xs text-muted-foreground">{event.location}</p>
-                    </div>
+          <CardContent className="space-y-4">
+            {upcomingEvents.map((event) =>
+              <div key={event.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-1.5 h-8 rounded-full ${event.type === 'exam' ?
+                      'bg-destructive' :
+                      event.type === 'deadline' ?
+                        'bg-yellow-500' :
+                        event.type === 'meeting' ?
+                          'bg-primary' :
+                          'bg-green-500'}`
+                    } />
+                  <div>
+                    <span className="text-sm font-bold block">{event.event}</span>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{event.location}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{event.date}</span>
                 </div>
-              )}
-            </div>
+                <Badge variant="outline" className="text-[10px] font-bold border-border/40 px-2 py-0 h-5">{event.date}</Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
       {/* Quick Navigation */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">Quick Navigation</CardTitle>
+      <Card className="border-none shadow-premium bg-muted/30">
+        <CardHeader className="pb-4 pt-6">
+          <CardTitle className="text-lg font-bold">Quick Navigation</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/students')}>
-              <Users className="h-5 w-5" />
-              <span className="text-xs">Students</span>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/students')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Students</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/staff')}>
-              <UserCog className="h-5 w-5" />
-              <span className="text-xs">Lecturers</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/staff')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <UserCog className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Lecturers</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/courses')}>
-              <BookOpen className="h-5 w-5" />
-              <span className="text-xs">Courses</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/courses')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Courses</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/departments')}>
-              <Building2 className="h-5 w-5" />
-              <span className="text-xs">Departments</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/departments')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Depts</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/reports')}>
-              <FileText className="h-5 w-5" />
-              <span className="text-xs">Reports</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/reports')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <FileText className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Reports</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/calendar')}>
-              <Calendar className="h-5 w-5" />
-              <span className="text-xs">Calendar</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/calendar')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Board</span>
             </Button>
           </div>
         </CardContent>

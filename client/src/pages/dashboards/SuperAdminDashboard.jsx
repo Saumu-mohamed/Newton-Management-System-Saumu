@@ -197,138 +197,138 @@ export default function SuperAdminDashboard() {
     });
   };
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-8 w-full animate-in fade-in duration-700">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
-          <h1 className="h1-page">Super Admin Dashboard</h1>
-          <p className="body-md text-muted-foreground">System-wide monitoring and management controls</p>
+          <h1 className="h1-page mb-1">Super Admin Dashboard</h1>
+          <p className="body-md text-muted-foreground flex items-center gap-2">
+            System-Wide Monitoring & Governance
+            <span className="w-1 h-1 rounded-full bg-border" />
+            Global Instance Status: <span className="text-green-600 font-bold uppercase tracking-tighter">Operational</span>
+          </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            Sync Status
           </Button>
-          <Button size="sm" onClick={handleExportReport}>
+          <Button className="rounded-xl shadow-lg shadow-primary/20" onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
-            Export Report
+            System Audit Report
           </Button>
         </div>
       </div>
       {/* Real-Time System Status */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        <Card className="border-green-500/20 bg-green-500/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-green-500/10">
-              <Server className="h-4 w-4 text-green-600" />
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <Card className="border-none shadow-sm bg-green-500/5 ring-1 ring-green-500/20">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-white shadow-sm ring-1 ring-green-500/10">
+              <Server className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">System Status</p>
-              <p className="text-sm font-semibold text-green-600">All Systems Online</p>
+              <p className="text-[10px] font-black text-green-600/70 uppercase tracking-widest">Core Engine</p>
+              <p className="text-sm font-black text-green-600 tracking-tight">ONLINE</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-primary/10">
-              <Wifi className="h-4 w-4 text-primary" />
+        <Card className="border-none shadow-sm bg-primary/5 ring-1 ring-primary/20">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-white shadow-sm ring-1 ring-primary/10">
+              <Wifi className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Active Sessions</p>
-              <p className="text-sm font-semibold">1,245 users online</p>
+              <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Active Pulse</p>
+              <p className="text-sm font-black text-primary tracking-tight">1,245 USERS</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-yellow-500/20 bg-yellow-500/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-yellow-500/10">
-              <Activity className="h-4 w-4 text-yellow-600" />
+        <Card className="border-none shadow-sm bg-yellow-500/5 ring-1 ring-yellow-500/20">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-white shadow-sm ring-1 ring-yellow-500/10">
+              <Activity className="h-5 w-5 text-yellow-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Server Load</p>
-              <p className="text-sm font-semibold text-yellow-600">65% CPU Usage</p>
+              <p className="text-[10px] font-black text-yellow-600/70 uppercase tracking-widest">Compute Load</p>
+              <p className="text-sm font-black text-yellow-700 tracking-tight">65% AVG</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-destructive/20 bg-destructive/5">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-destructive/10">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+        <Card className="border-none shadow-sm bg-destructive/5 ring-1 ring-destructive/20">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-white shadow-sm ring-1 ring-destructive/10">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Active Alerts</p>
-              <p className="text-sm font-semibold text-destructive">{systemAlerts.length} pending</p>
+              <p className="text-[10px] font-black text-destructive/70 uppercase tracking-widest">Sec. Alerts</p>
+              <p className="text-sm font-black text-destructive tracking-tight">{systemAlerts.length} URGENT</p>
             </div>
           </CardContent>
         </Card>
       </div>
       {/* KPI Cards */}
-      <div className="grid-cards">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Users"
+          title="Total Identities"
           value="9,275"
-          change="+12% from last month"
+          change="+12% YoY growth"
           changeType="positive"
           icon={Users} />
         <StatsCard
-          title="Active Students"
+          title="Academic Population"
           value="8,420"
-          change="+156 this week"
+          change="892 ready for grad"
           changeType="positive"
           icon={GraduationCap} />
         <StatsCard
-          title="Campuses"
+          title="Instance Clusters"
           value="4"
-          change="All operational"
+          change="All Nodes Healthy"
           changeType="neutral"
           icon={Building2} />
         <StatsCard
-          title="Pending Approvals"
+          title="Action Pipeline"
           value="23"
-          change="4 urgent"
+          change="4 urgent overrides"
           changeType="negative"
           icon={Clock} />
       </div>
       {/* Secondary KPIs */}
-      <div className="grid-cards">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Active Accounts"
           value="8,420"
-          change="90.8% of total"
+          change="90.8% Reach"
           changeType="positive"
-          icon={UserCheck}
-          iconColor="text-green-600" />
+          icon={UserCheck} />
         <StatsCard
-          title="Inactive Accounts"
+          title="Dormant"
           value="650"
-          change="Dormant > 30 days"
+          change="> 30 days"
           changeType="neutral"
-          icon={UserX}
-          iconColor="text-yellow-600" />
+          icon={UserX} />
         <StatsCard
           title="Suspended"
           value="85"
-          change="Requires review"
+          change="Policy violations"
           changeType="negative"
-          icon={Shield}
-          iconColor="text-destructive" />
+          icon={Shield} />
         <StatsCard
-          title="Fee Collection"
+          title="Institutional Revenue"
           value="KES 107M"
-          change="+18% this month"
+          change="+18% variance"
           changeType="positive"
-          icon={TrendingUp}
-          iconColor="text-green-600" />
+          icon={TrendingUp} />
       </div>
       {/* Charts Row */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <AreaChartCard
-          title="Enrollment Trend"
+          title="Campus Enrollment"
           data={enrollmentData}
           dataKey="students"
           xAxisKey="month" />
-        <PieChartCard title="User Distribution" data={userDistribution} />
-        <PieChartCard title="Account Status" data={accountStatus} />
+        <PieChartCard title="Role Distribution" data={userDistribution} />
+        <PieChartCard title="Security Status" data={accountStatus} />
       </div>
       {/* Tabbed Content */}
       <Tabs defaultValue="approvals" className="space-y-4">
@@ -339,11 +339,14 @@ export default function SuperAdminDashboard() {
           <TabsTrigger value="alerts">System Alerts</TabsTrigger>
         </TabsList>
         <TabsContent value="approvals">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Pending Approvals</CardTitle>
-                <Badge variant="secondary">{pendingApprovals.length} pending</Badge>
+                <div>
+                  <CardTitle className="text-lg font-bold">Pending Administrative Actions</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Requests requiring super admin authorization</p>
+                </div>
+                <Badge variant="secondary" className="px-3 py-1 font-bold">{pendingApprovals.length} ACTION REQUIRED</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -356,15 +359,18 @@ export default function SuperAdminDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="users">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">User Management</CardTitle>
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold">User Identity Management</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Control access and roles across the entire institution</p>
+                </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => {
+                  <Button variant="outline" className="rounded-xl h-9 font-bold text-xs" onClick={() => {
                     exportToCSV({ data: allUsers, filename: 'users-list' });
-                  }}>Export</Button>
-                  <Button size="sm" onClick={() => navigate('/users')}>Add User</Button>
+                  }}>EXPORT LIST</Button>
+                  <Button className="rounded-xl h-9 font-bold text-xs shadow-lg shadow-primary/20" onClick={() => navigate('/users')}>CREATE ACCOUNT</Button>
                 </div>
               </div>
             </CardHeader>
@@ -379,11 +385,14 @@ export default function SuperAdminDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="campuses">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Multi-Campus Comparison</CardTitle>
-                <Button variant="outline" size="sm" onClick={() => navigate('/campuses')}>View Details</Button>
+                <div>
+                  <CardTitle className="text-lg font-bold">Multi-Campus Ecosystem</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Comparative analytics across all institutional branches</p>
+                </div>
+                <Button variant="ghost" className="text-xs font-bold text-primary hover:bg-primary/5 h-8" onClick={() => navigate('/campuses')}>VIEW FULL REPORT</Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -391,10 +400,10 @@ export default function SuperAdminDashboard() {
                 columns={campusColumns}
                 data={campusComparison}
                 searchable={false}
-                pageSize={5} />
-              <div className="mt-4">
+                pageSize={4} />
+              <div className="mt-8 pt-6 border-t border-border/40">
                 <BarChartCard
-                  title="Campus Enrollment & Revenue"
+                  title="Branch Enrollment Matrix"
                   data={campusComparison}
                   dataKeys={['enrolled']}
                   xAxisKey="campus" />
@@ -403,41 +412,48 @@ export default function SuperAdminDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="alerts">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  Real-Time System Alerts
-                </CardTitle>
-                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                  <Activity className="h-3 w-3 mr-1" />
-                  Live
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Bell className="h-5 w-5 text-primary" />
+                    Instance Health Monitoring
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Real-time alerts and system events pipeline</p>
+                </div>
+                <Badge variant="outline" className="font-bold border-green-500/20 bg-green-500/5 text-green-600">
+                  <Activity className="h-3 w-3 mr-1.5 animate-pulse" />
+                  LIVE TRAFFIC
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {systemAlerts.map((alert) =>
                 <div
                   key={alert.id}
-                  className={`flex items-start gap-3 p-3 rounded-lg border ${alert.type === 'error' ? 'bg-destructive/5 border-destructive/20' :
-                    alert.type === 'warning' ? 'bg-yellow-500/5 border-yellow-500/20' :
-                      'bg-primary/5 border-primary/20'}`
+                  className={`flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 hover:shadow-md ${alert.type === 'error' ? 'bg-destructive/5 border-destructive/10' :
+                    alert.type === 'warning' ? 'bg-yellow-500/5 border-yellow-500/10' :
+                      'bg-primary/5 border-primary/10'}`
                   }>
-                  <AlertTriangle className={`h-4 w-4 mt-0.5 ${alert.type === 'error' ? 'text-destructive' :
-                    alert.type === 'warning' ? 'text-yellow-600' :
-                      'text-primary'}`
-                  } />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{alert.title}</p>
-                      <span className="text-xs text-muted-foreground">{alert.time}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{alert.message}</p>
+                  <div className={`p-2 rounded-xl bg-white shadow-sm ring-1 ring-inset ${alert.type === 'error' ? 'ring-destructive/20' : alert.type === 'warning' ? 'ring-yellow-500/20' : 'ring-primary/20'}`}>
+                    <AlertTriangle className={`h-4 w-4 ${alert.type === 'error' ? 'text-destructive' :
+                      alert.type === 'warning' ? 'text-yellow-600' :
+                        'text-primary'}`
+                    } />
                   </div>
-                  <Button size="sm" variant="ghost" className="h-7" onClick={() => toast.success('Alert Resolved', { description: `${alert.title} has been marked as resolved` })}>
-                    Resolve
-                  </Button>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-bold tracking-tight">{alert.title}</p>
+                      <span className="text-[10px] font-black text-muted-foreground uppercase">{alert.time}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{alert.message}</p>
+                    <div className="mt-3 flex justify-end">
+                      <Button size="sm" variant="ghost" className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-white" onClick={() => toast.success('Alert Resolved', { description: `${alert.title} has been marked as resolved` })}>
+                        ACKNOWLEDGE
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -445,70 +461,62 @@ export default function SuperAdminDashboard() {
         </TabsContent>
       </Tabs>
       {/* Audit Logs */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
+        <CardHeader className="pb-4 pt-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">Recent Audit Logs</CardTitle>
-            <Button variant="outline" size="sm" onClick={() => navigate('/audit-logs')}>View All Logs</Button>
+            <div>
+              <CardTitle className="text-lg font-bold">Global Audit Trail</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Comprehensive immutable log of all system activities</p>
+            </div>
+            <Button variant="outline" className="rounded-xl h-8 font-bold text-[10px]" onClick={() => navigate('/audit-logs')}>EXTENDED LOGS</Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {recentAuditLogs.map((log) =>
-              <div key={log.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${log.status === 'success' ? 'bg-green-500' :
+              <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className={`w-1.5 h-8 rounded-full ${log.status === 'success' ? 'bg-green-500' :
                     log.status === 'failed' ? 'bg-red-500' :
                       'bg-yellow-500'}`
                   } />
                   <div>
-                    <p className="text-sm font-medium">{log.action}</p>
-                    <p className="text-xs text-muted-foreground">{log.user} • {log.ip}</p>
+                    <p className="text-sm font-bold tracking-tight">{log.action}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{log.user} • {log.ip}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">{log.time}</p>
-                  <p className="text-xs text-muted-foreground">{log.details}</p>
+                  <p className="text-[10px] font-black text-primary uppercase">{log.time}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground leading-tight max-w-[150px] truncate">{log.details}</p>
                 </div>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
+      <Card className="border-none shadow-premium">
+        <CardHeader className="pb-4 pt-6">
+          <CardTitle className="text-lg font-bold">Administrative Command Center</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col gap-2"
-              onClick={() => navigate('/users')}>
-              <UserCheck className="h-5 w-5" />
-              <span className="text-xs">Manage Users</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col gap-2"
-              onClick={() => navigate('/campuses')}>
-              <Building2 className="h-5 w-5" />
-              <span className="text-xs">Manage Campuses</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col gap-2"
-              onClick={() => navigate('/audit-logs')}>
-              <Shield className="h-5 w-5" />
-              <span className="text-xs">Audit Logs</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col gap-2"
-              onClick={() => navigate('/reports')}>
-              <Download className="h-5 w-5" />
-              <span className="text-xs">Reports</span>
-            </Button>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            {[
+              { label: 'Manage Users', icon: UserCheck, path: '/users' },
+              { label: 'Manage Campuses', icon: Building2, path: '/campuses' },
+              { label: 'Global Audit', icon: Shield, path: '/audit-logs' },
+              { label: 'System Reports', icon: Download, path: '/reports' }
+            ].map((action) => (
+              <Button
+                key={action.label}
+                variant="outline"
+                className="h-auto py-6 flex-col gap-3 rounded-2xl border-border/40 hover:bg-primary/5 hover:border-primary/20 hover:shadow-md transition-all duration-300"
+                onClick={() => navigate(action.path)}>
+                <div className="p-3 rounded-xl bg-muted group-hover:bg-white shadow-sm transition-colors">
+                  <action.icon className="h-6 w-6 text-primary" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest">{action.label}</span>
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

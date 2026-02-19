@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import animate from 'tailwindcss-animate';
+
 export default {
   content: [
     "./index.html",
@@ -55,7 +57,7 @@ export default {
     },
   },
   plugins: [
-    require('tailwindcss-animate'),
+    animate,
     // Custom utility plugin to add design system utilities
     function ({ addUtilities, theme, e }) {
       const utilities = {

@@ -105,8 +105,8 @@ export function DataTable({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {searchable &&
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative w-full sm:w-80 group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
             <Input
               placeholder={searchPlaceholder}
               value={search}
@@ -114,7 +114,7 @@ export function DataTable({
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="pl-9" />
+              className="pl-10 h-11 bg-secondary/30 border-border/40 hover:bg-secondary/50 focus-visible:ring-primary/20 transition-all rounded-xl border-2 focus:border-primary/30" />
           </div>
         }
         {exportable &&
@@ -123,31 +123,36 @@ export function DataTable({
             size="sm"
             onClick={handleExport}
             disabled={isExporting || sortedData.length === 0}
-            className="w-full sm:w-auto">
+            className="w-full sm:w-auto h-11 px-6 rounded-xl border-border/50 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 shadow-sm font-semibold">
             {isExporting ?
               <Loader2 className="h-4 w-4 mr-2 animate-spin" /> :
               <Download className="h-4 w-4 mr-2" />
             }
-            {isExporting ? 'Exporting...' : 'Export'}
+            {isExporting ? 'Exporting...' : 'Export Data'}
           </Button>
         }
       </div>
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl shadow-primary/5">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50">
+            <TableRow className="bg-muted/10 border-b border-border/40 hover:bg-transparent">
               {columns.map((col) =>
                 <TableHead
                   key={String(col.key)}
                   className={cn(
-                    'font-semibold',
-                    col.sortable && 'cursor-pointer hover:text-foreground'
+                    'h-14 font-bold uppercase tracking-widest text-[10px] text-muted-foreground/80',
+                    col.sortable && 'cursor-pointer hover:text-primary transition-colors'
                   )}
                   onClick={() => col.sortable && handleSort(String(col.key))}>
-                  {col.label}
-                  {sortKey === col.key &&
-                    <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
-                  }
+                  <div className="flex items-center gap-2">
+                    {col.label}
+                    {col.sortable && (
+                      <div className="flex flex-col gap-0.5 opacity-50">
+                        <span className={cn('text-[8px] leading-none', sortKey === col.key && sortDir === 'asc' && 'text-primary opacity-100')}>▲</span>
+                        <span className={cn('text-[8px] leading-none', sortKey === col.key && sortDir === 'desc' && 'text-primary opacity-100')}>▼</span>
+                      </div>
+                    )}
+                  </div>
                 </TableHead>
               )}
             </TableRow>
@@ -155,17 +160,26 @@ export function DataTable({
           <TableBody>
             {paginatedData.length === 0 ?
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                  No data found
+                <TableCell colSpan={columns.length} className="text-center py-20 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-12 w-12 rounded-2xl bg-muted/20 flex items-center justify-center">
+                      <Search className="h-6 w-6 opacity-20" />
+                    </div>
+                    <p className="font-semibold text-sm">No results found</p>
+                    <p className="text-xs">Try adjusting your search filters</p>
+                  </div>
                 </TableCell>
               </TableRow> :
               paginatedData.map((row, idx) =>
                 <TableRow
                   key={idx}
-                  className={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
+                  className={cn(
+                    'border-b border-border/20 transition-colors',
+                    onRowClick && 'cursor-pointer hover:bg-primary/5'
+                  )}
                   onClick={() => onRowClick?.(row)}>
                   {columns.map((col) =>
-                    <TableCell key={String(col.key)}>
+                    <TableCell key={String(col.key)} className="py-4 font-medium text-sm text-foreground/80">
                       {col.render ?
                         col.render(getValue(row, String(col.key)), row) :
                         getValue(row, String(col.key))}

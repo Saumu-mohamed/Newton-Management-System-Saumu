@@ -58,7 +58,7 @@ export default function ProfilePage() {
   };
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <p className="text-muted-foreground">Please log in to view your profile.</p>
       </div>);
   }

@@ -176,18 +176,22 @@ export default function RegistrarDashboard() {
     exportToCSV({ data: pendingRegistrations, filename: 'registration-data' });
   };
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-8 w-full animate-in fade-in duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
-          <h1 className="h1-page">Registrar Dashboard</h1>
-          <p className="body-md text-muted-foreground">Student registration and academic records management</p>
+          <h1 className="h1-page mb-1">Registrar Dashboard</h1>
+          <p className="body-md text-muted-foreground flex items-center gap-2">
+            Academic Records & Enrollment Management
+            <span className="w-1 h-1 rounded-full bg-border" />
+            Academic Year 2023/2024
+          </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleExportData}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={handleExportData}>
             <Download className="h-4 w-4 mr-2" />
-            Export Data
+            Export Records
           </Button>
-          <Button size="sm" onClick={() => navigate('/calendar')}>
+          <Button className="rounded-xl shadow-lg shadow-primary/20" onClick={() => navigate('/calendar')}>
             <Calendar className="h-4 w-4 mr-2" />
             Academic Calendar
           </Button>
@@ -221,21 +225,19 @@ export default function RegistrarDashboard() {
           icon={GraduationCap} />
       </div>
       {/* Secondary KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Prerequisite Violations"
           value="45"
           change="Requires attention"
           changeType="negative"
-          icon={AlertTriangle}
-          iconColor="text-destructive" />
+          icon={AlertTriangle} />
         <StatsCard
           title="Academic Warnings"
           value="67"
-          change="Probation letters sent"
+          change="Letters dispatched"
           changeType="negative"
-          icon={AlertCircle}
-          iconColor="text-yellow-600" />
+          icon={AlertCircle} />
         <StatsCard
           title="Active Courses"
           value="186"
@@ -245,20 +247,20 @@ export default function RegistrarDashboard() {
         <StatsCard
           title="Days to Deadline"
           value="12"
-          change="Late registration closes"
+          change="Late reg. period"
           changeType="neutral"
           icon={Calendar} />
       </div>
       {/* Charts */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <AreaChartCard
-          title="Registration Progress by Week"
+          title="Registration Velocity"
           data={registrationTrend}
           dataKey="registrations"
           xAxisKey="week" />
-        <PieChartCard title="Registration Status Distribution" data={registrationStatus} />
+        <PieChartCard title="Status Distribution" data={registrationStatus} />
         <BarChartCard
-          title="Admissions by Intake"
+          title="Intake Comparison"
           data={admissionsByIntake}
           dataKeys={['admitted', 'current']}
           xAxisKey="intake" />
@@ -272,11 +274,14 @@ export default function RegistrarDashboard() {
           <TabsTrigger value="graduation">Graduation Eligibility</TabsTrigger>
         </TabsList>
         <TabsContent value="registrations">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Pending Unit Registrations</CardTitle>
-                <Badge variant="secondary">{pendingRegistrations.length} pending</Badge>
+                <div>
+                  <CardTitle className="text-lg font-bold">Pending Registrations</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Students awaiting unit verification</p>
+                </div>
+                <Badge variant="secondary" className="px-3 py-1 font-bold">{pendingRegistrations.length} PENDING VERIFICATION</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -290,14 +295,17 @@ export default function RegistrarDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="violations">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Prerequisite Violations
-                </CardTitle>
-                <Badge variant="destructive">{prerequisiteViolations.length} violations</Badge>
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Prerequisite Violations
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Students blocked by missing unit requirements</p>
+                </div>
+                <Badge variant="destructive" className="px-3 py-1 font-bold">{prerequisiteViolations.length} ACTIVE BLOCKS</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -310,16 +318,19 @@ export default function RegistrarDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="transcripts">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Transcript Requests</CardTitle>
+                <div>
+                  <CardTitle className="text-lg font-bold">Transcript Requests</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Academic records and certification pipeline</p>
+                </div>
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                    {transcriptRequests.filter((t) => t.status === 'Ready').length} Ready
+                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-none font-bold">
+                    {transcriptRequests.filter((t) => t.status === 'Ready').length} READY
                   </Badge>
-                  <Badge variant="secondary">
-                    {transcriptRequests.filter((t) => t.status === 'Processing').length} Processing
+                  <Badge variant="secondary" className="font-bold">
+                    {transcriptRequests.filter((t) => t.status === 'Processing').length} PROCESSING
                   </Badge>
                 </div>
               </div>
@@ -335,14 +346,19 @@ export default function RegistrarDashboard() {
           </Card>
         </TabsContent>
         <TabsContent value="graduation">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium bg-linear-to-br from-card to-primary/5">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Graduation Eligibility - June 2024
-                </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => toast.success('Generating List', { description: 'Graduation list is being generated...' })}>Generate List</Button>
+                <div>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                    Graduation Eligibility
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Candidates for June 2024 Conferment</p>
+                </div>
+                <Button className="rounded-xl h-9 font-bold text-xs shadow-lg shadow-primary/20" onClick={() => toast.success('Generating List', { description: 'Graduation list is being generated...' })}>
+                  GENERATE FINAL LIST
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -357,100 +373,92 @@ export default function RegistrarDashboard() {
         </TabsContent>
       </Tabs>
       {/* Alerts & Calendar */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Academic Alerts */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium">Academic Alerts</CardTitle>
+        <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              Critical Academic Alerts
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Registration Deadline Approaching</p>
-                <p className="text-xs text-muted-foreground">Late registration closes in 12 days. 450 students still pending.</p>
+          <CardContent className="space-y-4">
+            {[
+              { title: 'Registration Deadline', desc: 'Late registration closes in 12 days. 450 students pending.', icon: Clock, color: 'bg-destructive/10 text-destructive border-destructive/10' },
+              { title: 'Prerequisite Blocks', desc: '45 Students missing requirements. Review before exams.', icon: AlertTriangle, color: 'bg-yellow-500/10 text-yellow-700 border-yellow-500/10' },
+              { title: 'Graduation Pipeline', desc: 'Final graduation list submission due by March 30, 2024.', icon: GraduationCap, color: 'bg-primary/10 text-primary border-primary/10' },
+              { title: 'Results Verified', desc: 'Semester 1 2023/2024 results verified and published.', icon: CheckCircle, color: 'bg-green-600/10 text-green-700 border-green-600/10' }
+            ].map((alert) => (
+              <div key={alert.title} className={`flex items-start gap-4 p-4 rounded-2xl border ${alert.color.split(' ').slice(1).join(' ')} ${alert.color.split(' ')[0]} transition-all hover:shadow-md`}>
+                <alert.icon className="h-5 w-5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-black uppercase tracking-tight">{alert.title}</p>
+                  <p className="text-sm font-medium opacity-90 leading-tight mt-0.5">{alert.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <Clock className="h-4 w-4 text-yellow-600 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">45 Students Missing Prerequisites</p>
-                <p className="text-xs text-muted-foreground">Review and resolve before exam registration opens.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
-              <GraduationCap className="h-4 w-4 text-primary mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Graduation List Due</p>
-                <p className="text-xs text-muted-foreground">Submit final graduation list by March 30, 2024.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Results Processing Complete</p>
-                <p className="text-xs text-muted-foreground">Semester 1 2023/2024 results verified and published.</p>
-              </div>
-            </div>
+            ))}
           </CardContent>
         </Card>
         {/* Semester Calendar */}
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="border-none shadow-premium">
+          <CardHeader className="pb-4 pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-medium">Semester Calendar</CardTitle>
-              <Button variant="outline" size="sm">
-                <Edit className="h-4 w-4 mr-1" />
-                Edit Calendar
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Registrar's Calendar
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:bg-primary/5 h-7 px-2">
+                EDIT TIMELINE
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {semesterCalendar.map((item) =>
-                <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${item.status === 'Completed' ? 'bg-green-500' : 'bg-primary'}`
-                    } />
-                    <div>
-                      <p className="text-sm font-medium">{item.event}</p>
-                      <p className="text-xs text-muted-foreground">{item.date}</p>
-                    </div>
+          <CardContent className="space-y-4">
+            {semesterCalendar.map((item) =>
+              <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className={`w-1.5 h-8 rounded-full ${item.status === 'Completed' ? 'bg-green-500' : 'bg-primary'}`
+                  } />
+                  <div>
+                    <p className="text-sm font-bold tracking-tight">{item.event}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{item.date}</p>
                   </div>
-                  <Badge variant={item.status === 'Completed' ? 'secondary' : 'outline'}>
-                    {item.status}
-                  </Badge>
                 </div>
-              )}
-            </div>
+                <Badge variant={item.status === 'Completed' ? 'secondary' : 'outline'} className="text-[10px] font-black h-5">
+                  {item.status.toUpperCase()}
+                </Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
       {/* Student Lifecycle Overview */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">Student Lifecycle by Intake</CardTitle>
+      <Card className="border-none shadow-premium bg-muted/20">
+        <CardHeader className="pb-4 pt-6">
+          <CardTitle className="text-lg font-bold">Student Success Pipeline</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2">
             {admissionsByIntake.slice(0, 4).map((intake) =>
-              <div key={intake.intake} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{intake.intake}</span>
-                  <span className="text-muted-foreground">
-                    {intake.current} current / {intake.admitted} admitted
-                    {intake.graduated > 0 && ` • ${intake.graduated} graduated`}
+              <div key={intake.intake} className="space-y-3 p-5 rounded-2xl bg-white border border-border/40 shadow-sm transition-all hover:shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black tracking-tighter text-primary uppercase">{intake.intake} INTAKE</span>
+                  <span className="text-[11px] font-bold text-muted-foreground">
+                    {intake.current} ACTIVE • {intake.admitted} ADMITTED
                   </span>
                 </div>
-                <div className="flex gap-1 h-2">
+                <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden shadow-inner">
                   <div
-                    className="bg-primary rounded-l"
+                    className="absolute top-0 left-0 h-full bg-linear-to-r from-primary to-primary/80 transition-all duration-1000"
                     style={{ width: `${intake.current / intake.admitted * 100}%` }} />
                   {intake.graduated > 0 &&
                     <div
-                      className="bg-green-500 rounded-r"
+                      className="absolute top-0 right-0 h-full bg-green-500 transition-all duration-1000"
                       style={{ width: `${intake.graduated / intake.admitted * 100}%` }} />
                   }
+                </div>
+                <div className="flex justify-between items-center text-[10px] font-black tracking-widest uppercase">
+                  <span className="text-primary">RETENTION: {(intake.current / intake.admitted * 100).toFixed(0)}%</span>
+                  {intake.graduated > 0 && <span className="text-green-600">GRADUATION: {(intake.graduated / intake.admitted * 100).toFixed(0)}%</span>}
                 </div>
               </div>
             )}

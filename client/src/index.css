@@ -224,36 +224,52 @@
 @layer utilities {
   /* Glass effect utility */
   .glass {
-    @apply bg-background/80 backdrop-blur-md;
+    @apply bg-background/80 backdrop-blur-md border border-white/10;
+  }
+
+  .glass-premium {
+    @apply bg-linear-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 shadow-2xl shadow-black/5;
   }
 
   /* Gradient text utility */
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+    @apply bg-linear-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent animate-pulse-subtle;
   }
 
   /* Card hover effect */
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5;
+    @apply transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1.5 border-primary/10;
   }
 
   /* Subtle animation */
   .animate-subtle-bounce {
-    animation: subtle-bounce 2s ease-in-out infinite;
+    animation: subtle-bounce 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 4s ease-in-out infinite;
   }
 
   @keyframes subtle-bounce {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-4px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
   }
 
   /* Transition smooth utility */
-  .transition-smooth {
-    @apply transition-all duration-200 ease-out;
+  .transition-premium {
+    @apply transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .container-page {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .shadow-premium {
+    box-shadow: 0 0 50px -12px rgba(var(--primary), 0.12), 0 18px 38px -10px rgba(var(--primary), 0.08);
   }
 }

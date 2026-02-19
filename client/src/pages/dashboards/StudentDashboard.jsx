@@ -196,18 +196,24 @@ export default function StudentDashboard() {
     });
   };
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-8 w-full animate-in fade-in duration-700">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
-          <h1 className="h1-page">My Dashboard</h1>
-          <p className="body-md text-muted-foreground">Welcome back, Faith Achieng • CS/2023/045 • Year 3</p>
+          <h1 className="h1-page mb-1">My Dashboard</h1>
+          <p className="body-md text-muted-foreground flex items-center gap-2">
+            Welcome back, <span className="font-semibold text-foreground">Faith Achieng</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            CS/2023/045
+            <span className="w-1 h-1 rounded-full bg-border" />
+            Year 3
+          </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={handleDownloadTranscript}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={handleDownloadTranscript}>
             <Download className="h-4 w-4 mr-2" />
             Download Transcript
           </Button>
-          <Button size="sm" onClick={() => navigate('/results')}>
+          <Button className="rounded-xl shadow-lg shadow-primary/20" onClick={() => navigate('/results')}>
             <FileText className="h-4 w-4 mr-2" />
             View Results
           </Button>
@@ -241,74 +247,74 @@ export default function StudentDashboard() {
           icon={Calendar} />
       </div>
       {/* Fee Progress */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">Fee Payment Progress - Semester 2 2023/24</CardTitle>
-            <Button size="sm" onClick={() => navigate('/fees')}>
+      <Card className="glass-premium overflow-hidden">
+        <CardHeader className="pb-4 pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardTitle className="text-lg font-bold tracking-tight">Fee Payment Progress - Semester 2 2023/24</CardTitle>
+            <Button size="sm" variant="default" className="rounded-xl" onClick={() => navigate('/fees')}>
               <Smartphone className="h-4 w-4 mr-2" />
               Pay via M-Pesa
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>KES {(totalFees - feeBalance).toLocaleString()} paid</span>
-              <span className="text-muted-foreground">KES {totalFees.toLocaleString()} total</span>
+        <CardContent className="pb-8">
+          <div className="space-y-4">
+            <div className="flex justify-between text-sm font-medium">
+              <span className="text-foreground">KES {(totalFees - feeBalance).toLocaleString()} paid</span>
+              <span className="text-muted-foreground">Goal: KES {totalFees.toLocaleString()}</span>
             </div>
-            <Progress value={feePercentage} className="h-3" />
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">{feePercentage.toFixed(0)}% paid</span>
-              <span className="text-destructive font-medium">Balance: KES {feeBalance.toLocaleString()}</span>
+            <Progress value={feePercentage} className="h-3 shadow-premium" />
+            <div className="flex justify-between text-xs font-semibold">
+              <span className="text-primary">{feePercentage.toFixed(0)}% completed</span>
+              <span className="text-destructive uppercase tracking-wider">Balance Due: KES {feeBalance.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
       </Card>
-      {/* Academic Summary */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
+      {/* Academic Summary Grid */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="card-hover border-none bg-linear-to-br from-green-500/10 to-transparent">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Current CGPA</p>
-                <p className="text-3xl font-bold">{currentCGPA.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground mt-1">2nd Class Upper Division</p>
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-green-600/70">Current CGPA</p>
+                <p className="text-3xl font-black text-green-600">{currentCGPA.toFixed(2)}</p>
+                <p className="text-xs font-medium text-green-600/60 mt-2">2nd Class Upper Division</p>
               </div>
-              <div className="p-3 rounded-full bg-green-500/10">
-                <GraduationCap className="h-6 w-6 text-green-600" />
+              <div className="p-4 rounded-2xl bg-white shadow-xl shadow-green-500/10">
+                <GraduationCap className="h-7 w-7 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
+        <Card className="card-hover border-none bg-linear-to-br from-primary/10 to-transparent">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Credits</p>
-                <p className="text-3xl font-bold">{totalCredits}</p>
-                <p className="text-xs text-muted-foreground mt-1">of 144 required</p>
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary/70">Total Credits</p>
+                <p className="text-3xl font-black text-primary">{totalCredits}</p>
+                <p className="text-xs font-medium text-primary/60 mt-2">of 144 required</p>
               </div>
-              <div className="p-3 rounded-full bg-primary/10">
-                <BookOpen className="h-6 w-6 text-primary" />
+              <div className="p-4 rounded-2xl bg-white shadow-xl shadow-primary/10">
+                <BookOpen className="h-7 w-7 text-primary" />
               </div>
             </div>
-            <Progress value={totalCredits / 144 * 100} className="h-2 mt-3" />
+            <Progress value={totalCredits / 144 * 100} className="h-1.5 mt-4 bg-primary/10" />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
+        <Card className="card-hover border-none bg-linear-to-br from-yellow-500/10 to-transparent">
+          <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Semester Status</p>
-                <p className="text-3xl font-bold">6</p>
-                <p className="text-xs text-muted-foreground mt-1">of 8 semesters</p>
+              <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-yellow-600/70">Semester Status</p>
+                <p className="text-3xl font-black text-yellow-600">06</p>
+                <p className="text-xs font-medium text-yellow-600/60 mt-2">Final stretch: 2 more to go</p>
               </div>
-              <div className="p-3 rounded-full bg-yellow-500/10">
-                <Clock className="h-6 w-6 text-yellow-600" />
+              <div className="p-4 rounded-2xl bg-white shadow-xl shadow-yellow-500/10">
+                <Clock className="h-7 w-7 text-yellow-600" />
               </div>
             </div>
-            <Progress value={75} className="h-2 mt-3" />
+            <Progress value={75} className="h-1.5 mt-4 bg-yellow-500/10" />
           </CardContent>
         </Card>
       </div>
@@ -316,11 +322,14 @@ export default function StudentDashboard() {
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Registered Units */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Registered Units - Semester 6</CardTitle>
-                <Badge variant="secondary">5 units • 14 credits</Badge>
+                <div>
+                  <CardTitle className="text-lg font-bold">Registered Units</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Semester 6 Academic Year 2023/2024</p>
+                </div>
+                <Badge variant="secondary" className="px-3 py-1 font-bold">5 UNITS • 14 CREDITS</Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -333,52 +342,60 @@ export default function StudentDashboard() {
           </Card>
         </div>
         {/* Sidebar - Deadlines & Notifications */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Upcoming Deadlines */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Upcoming Deadlines</CardTitle>
+          <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
+            <CardHeader className="pb-4 pt-6">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Next Deadlines
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {upcomingDeadlines.map((item) =>
                 <div
                   key={item.id}
-                  className={`flex items-start gap-3 p-2 rounded-lg ${item.urgent ? 'bg-destructive/5 border border-destructive/10' : ''}`
+                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-md ${item.urgent ? 'bg-destructive/5 border border-destructive/10' : 'bg-muted/30 border border-transparent'}`
                   }>
-                  {item.type === 'finance' && <Wallet className="h-4 w-4 text-destructive mt-0.5" />}
-                  {item.type === 'academic' && <FileText className="h-4 w-4 text-primary mt-0.5" />}
-                  {item.type === 'exam' && <Calendar className="h-4 w-4 text-yellow-500 mt-0.5" />}
-                  {item.type === 'deadline' && <Clock className="h-4 w-4 text-orange-500 mt-0.5" />}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.date}</p>
+                  <div className={`p-2 rounded-lg ${item.urgent ? 'bg-destructive/10' : 'bg-white shadow-sm'}`}>
+                    {item.type === 'finance' && <Wallet className="h-4 w-4 text-destructive" />}
+                    {item.type === 'academic' && <FileText className="h-4 w-4 text-primary" />}
+                    {item.type === 'exam' && <Calendar className="h-4 w-4 text-yellow-500" />}
+                    {item.type === 'deadline' && <Clock className="h-4 w-4 text-orange-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground font-medium">{item.date}</p>
                   </div>
                   {item.urgent &&
-                    <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                    <Badge variant="destructive" className="text-[10px] h-5 px-1.5 font-bold uppercase tracking-tighter">Urgent</Badge>
                   }
                 </div>
               )}
             </CardContent>
           </Card>
           {/* Notifications */}
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-none shadow-premium">
+            <CardHeader className="pb-4 pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Notifications</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => toast.info('All Notifications', { description: 'Full notification center coming soon' })}>View All</Button>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" />
+                  Activity
+                </CardTitle>
+                <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:text-primary hover:bg-primary/5 px-2 h-7" onClick={() => toast.info('All Notifications', { description: 'Full notification center coming soon' })}>View All</Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-4">
               {notifications.slice(0, 3).map((notification) =>
-                <div key={notification.id} className="flex items-start gap-3 py-2 border-b last:border-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${notification.type === 'warning' ? 'bg-yellow-500' :
+                <div key={notification.id} className="flex items-start gap-4 group cursor-pointer">
+                  <div className={`w-2 h-2 rounded-full mt-2 shrink-0 animate-pulse ${notification.type === 'warning' ? 'bg-yellow-500' :
                     notification.type === 'success' ? 'bg-green-500' :
                       'bg-primary'}`
                   } />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{notification.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+                  <div className="flex-1 border-b border-border/40 pb-3 group-last:border-0 group-last:pb-0">
+                    <p className="text-sm font-bold group-hover:text-primary transition-colors">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notification.message}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground/60 mt-1.5 uppercase tracking-wide">{notification.time}</p>
                   </div>
                 </div>
               )}
@@ -505,35 +522,47 @@ export default function StudentDashboard() {
         </TabsContent>
       </Tabs>
       {/* Quick Actions */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">Quick Actions</CardTitle>
+      <Card className="border-none shadow-premium bg-muted/30">
+        <CardHeader className="pb-4 pt-6">
+          <CardTitle className="text-lg font-bold">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/fees')}>
-              <Smartphone className="h-5 w-5" />
-              <span className="text-xs">Pay Fees</span>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/fees')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Smartphone className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Pay Fees</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/my-courses')}>
-              <BookOpen className="h-5 w-5" />
-              <span className="text-xs">Register Units</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/my-courses')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Register Units</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/results')}>
-              <FileText className="h-5 w-5" />
-              <span className="text-xs">View Results</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/results')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <FileText className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">View Results</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={handleDownloadTranscript}>
-              <Download className="h-5 w-5" />
-              <span className="text-xs">Transcript</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={handleDownloadTranscript}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Download className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Transcript</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/timetable')}>
-              <Calendar className="h-5 w-5" />
-              <span className="text-xs">Timetable</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={() => navigate('/timetable')}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Timetable</span>
             </Button>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={handlePrintFeeStatement}>
-              <CreditCard className="h-5 w-5" />
-              <span className="text-xs">Fee Statement</span>
+            <Button variant="outline" className="h-auto py-6 flex-col gap-3 rounded-2xl bg-white border-border/40 hover:border-primary/50 hover:bg-primary/5 group" onClick={handlePrintFeeStatement}>
+              <div className="p-3 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider">Fee Statement</span>
             </Button>
           </div>
         </CardContent>

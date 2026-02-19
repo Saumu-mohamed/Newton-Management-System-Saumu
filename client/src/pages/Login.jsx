@@ -54,7 +54,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-background via-background/95 to-primary/5 flex items-center justify-center p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen w-full bg-linear-to-br from-background via-background/95 to-primary/5 flex items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="w-full max-w-md space-y-6 animate-fade-in">
         {/* Header Section */}
         <div className="text-center space-y-3">
@@ -190,7 +190,7 @@ export default function Login() {
                     <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
                       {account.role}
                     </span>
-                    <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    <span className="text-xs text-muted-foreground truncate max-w-30">
                       {account.email}
                     </span>
                   </div>

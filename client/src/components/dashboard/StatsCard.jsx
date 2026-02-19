@@ -12,31 +12,47 @@ export function StatsCard({
   return (
     <Card
       className={cn(
-        'transition-all duration-200 hover:shadow-md',
-        onClick && 'cursor-pointer hover:border-primary/50'
+        'group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 border-border/50 bg-card/50 backdrop-blur-sm',
+        onClick && 'cursor-pointer'
       )}
       onClick={onClick}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold tracking-tight">{value}</p>
-            {change &&
-              <p
-                className={cn(
-                  'text-xs font-medium',
-                  changeType === 'positive' && 'text-green-600',
-                  changeType === 'negative' && 'text-red-600',
-                  changeType === 'neutral' && 'text-muted-foreground'
-                )}>
-                {change}
-              </p>
-            }
+      <CardContent className="p-0">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className={cn(
+              'flex items-center justify-center h-12 w-12 rounded-2xl transition-all duration-300 group-hover:scale-110 shadow-sm',
+              'bg-linear-to-br from-primary/10 to-primary/5 border border-primary/10',
+              iconColor
+            )}>
+              <Icon className="h-6 w-6" />
+            </div>
+            {change && (
+              <div className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-colors',
+                changeType === 'positive' && 'bg-green-500/10 text-green-600',
+                changeType === 'negative' && 'bg-red-500/10 text-red-600',
+                changeType === 'neutral' && 'bg-muted/50 text-muted-foreground'
+              )}>
+                <span>{change}</span>
+              </div>
+            )}
           </div>
-          <div className={cn('p-3 rounded-xl bg-primary/10', iconColor)}>
-            <Icon className="h-5 w-5" />
+
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">
+              {title}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-3xl font-extrabold tracking-tight text-foreground">
+                {value}
+              </h3>
+            </div>
           </div>
         </div>
+
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 bg-primary/5 rounded-full blur-2xl transition-opacity group-hover:opacity-100 opacity-0" />
+        <div className="absolute bottom-0 left-0 h-1 w-0 bg-primary/30 transition-all duration-500 group-hover:w-full" />
       </CardContent>
     </Card>);
 }

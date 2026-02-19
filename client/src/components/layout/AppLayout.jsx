@@ -20,8 +20,8 @@ export function AppLayout() {
           <Header />
 
           {/* Main scrollable content */}
-          <main className="flex-1 overflow-auto bg-background">
-            <div className="container-page space-y-6">
+          <main className="flex-1 overflow-auto bg-background/50 selection:bg-primary/10">
+            <div className="container-page py-8 px-6 sm:px-10 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <Outlet />
             </div>
           </main>

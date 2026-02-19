@@ -401,11 +401,11 @@
   /* BACKGROUNDS
      ==================== */
   .bg-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-accent;
+    @apply bg-linear-to-r from-primary to-accent;
   }
 
   .bg-gradient-secondary {
-    @apply bg-gradient-to-r from-secondary to-muted;
+    @apply bg-linear-to-r from-secondary to-muted;
   }
 
   .bg-mesh {
