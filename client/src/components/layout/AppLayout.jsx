@@ -10,12 +10,12 @@ import { Outlet } from 'react-router-dom';
 export function AppLayout() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="h-screen w-full overflow-hidden bg-background flex">
         {/* Collapsible sidebar - z-50 for mobile overlay */}
         <AppSidebar />
 
         {/* Main content area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 h-full md:pl-64">
           {/* Fixed header - z-40 to stay above content but below modals */}
           <Header />
 

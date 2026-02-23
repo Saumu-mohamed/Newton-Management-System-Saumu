@@ -90,10 +90,10 @@ export function Header() {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b border-border bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+      className="sticky top-0 z-40 border-b border-border bg-background/60 backdrop-blur-xl supports-backdrop-filter:bg-background/60"
       role="banner"
     >
-      <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-8">
+      <div className=" flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-8">
         {/* Left section: Sidebar trigger */}
         <div className="flex items-center gap-2 flex-none lg:hidden">
           <SidebarTrigger className="shrink-0 hover:bg-accent/50 transition-colors" />

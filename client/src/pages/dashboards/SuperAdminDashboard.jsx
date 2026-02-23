@@ -487,7 +487,7 @@ export default function SuperAdminDashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-primary uppercase">{log.time}</p>
-                  <p className="text-[10px] font-medium text-muted-foreground leading-tight max-w-[150px] truncate">{log.details}</p>
+                  <p className="text-[10px] font-medium text-muted-foreground leading-tight max-w-37.5 truncate">{log.details}</p>
                 </div>
               </div>
             )}

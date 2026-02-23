@@ -18,12 +18,14 @@ import {
   FileText,
   UserCog,
   BarChart3,
+  Wallet,
   Eye,
   Mail
 } from
   'lucide-react';
 import { useState } from 'react';
 import { ConfirmModal } from '@/components/modals';
+
 // Mock data for college admin
 const enrollmentByFaculty = [
   { faculty: 'Engineering', students: 1250, target: 1400 },
