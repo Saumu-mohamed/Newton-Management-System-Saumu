@@ -22,6 +22,7 @@ import {
   CheckCircle,
   FileText,
   CreditCard,
+  Bell,
   Smartphone,
   MapPin,
   Eye

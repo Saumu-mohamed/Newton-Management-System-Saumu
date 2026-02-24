@@ -222,6 +222,7 @@
 }
 
 @layer utilities {
+
   /* Glass effect utility */
   .glass {
     @apply bg-background/80 backdrop-blur-md border border-white/10;
@@ -233,7 +234,9 @@
 
   /* Gradient text utility */
   .gradient-text {
-    @apply bg-linear-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent animate-pulse-subtle;
+    @apply bg-linear-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent;
+
+    animation: pulse-subtle 4000ms ease-in-out infinite;
   }
 
   /* Card hover effect */
@@ -247,22 +250,37 @@
   }
 
   .animate-pulse-subtle {
-    animation: pulse-subtle 4s ease-in-out infinite;
+    animation: pulse-subtle 4000ms ease-in-out infinite;
   }
 
   @keyframes subtle-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-6px);
+    }
   }
 
   @keyframes pulse-subtle {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.8;
+    }
   }
 
   /* Transition smooth utility */
   .transition-premium {
-    @apply transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1);
+    @apply transition-all duration-500;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .container-page {
