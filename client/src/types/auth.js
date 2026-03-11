@@ -1,16 +1,19 @@
-export const ROLE_LABELS = {
-  super_admin: 'Super Admin',
-  college_admin: 'College Admin',
-  registrar: 'Registrar',
-  finance_officer: 'Finance Officer',
-  lecturer: 'Lecturer',
-  student: 'Student'
-};
 export const ROLE_ROUTES = {
-  super_admin: '/super-admin-dashboard',
-  college_admin: '/college-admin-dashboard',
-  registrar: '/registrar-dashboard',
-  finance_officer: '/finance-dashboard',
-  lecturer: '/lecturer-dashboard',
-  student: '/student-dashboard'
+  superadmin: "/superadmin/dashboard",
+  collegeadmin: "/collegeadmin/dashboard",
+  registrator: "/registrator/dashboard",
+  finance: "/finance/dashboard",
+  lecturer: "/lecturer/dashboard",
+  student: "/student/dashboard"
 };
+
+export const ROLE_LABELS = {
+  superadmin: 'Superadmin',
+  collegeadmin: 'Collegeadmin',
+  lecturer: 'Lecturer',
+  student: 'Student',
+  registrator: 'Registrator',
+  finance: 'Finance'
+};
+
+export const ROLES = Object.keys(ROLE_ROUTES);

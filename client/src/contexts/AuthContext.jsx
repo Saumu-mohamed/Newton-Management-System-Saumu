@@ -1,113 +1,145 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { ROLE_ROUTES } from '@/types/auth';
-// Mock users for demo
-const MOCK_USERS = {
-  'admin@cms.edu': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      email: 'admin@cms.edu',
-      name: 'John Kamau',
-      role: 'super_admin',
-      avatar: ''
-    }
-  },
-  'college@cms.edu': {
-    password: 'college123',
-    user: {
-      id: '2',
-      email: 'college@cms.edu',
-      name: 'Mary Wanjiku',
-      role: 'college_admin',
-      campus: 'Main Campus'
-    }
-  },
-  'registrar@cms.edu': {
-    password: 'registrar123',
-    user: {
-      id: '3',
-      email: 'registrar@cms.edu',
-      name: 'Peter Ochieng',
-      role: 'registrar',
-      campus: 'Main Campus'
-    }
-  },
-  'finance@cms.edu': {
-    password: 'finance123',
-    user: {
-      id: '4',
-      email: 'finance@cms.edu',
-      name: 'Grace Muthoni',
-      role: 'finance_officer',
-      campus: 'Main Campus'
-    }
-  },
-  'lecturer@cms.edu': {
-    password: 'lecturer123',
-    user: {
-      id: '5',
-      email: 'lecturer@cms.edu',
-      name: 'Dr. James Kiprop',
-      role: 'lecturer',
-      department: 'Computer Science'
-    }
-  },
-  'student@cms.edu': {
-    password: 'student123',
-    user: {
-      id: '6',
-      email: 'student@cms.edu',
-      name: 'Faith Achieng',
-      role: 'student',
-      department: 'Computer Science'
-    }
-  }
-};
-const AuthContext = createContext(undefined);
-export function AuthProvider({ children }) {
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import axios from "axios";
+import { ROLE_ROUTES } from "@/types/auth.js";
+import { loginUser, changeUserPassword } from "@/services/authServices.js";
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+
   const [authState, setAuthState] = useState(() => {
-    const stored = localStorage.getItem('cms_user');
-    if (stored) {
-      const user = JSON.parse(stored);
-      return { user, isAuthenticated: true, isLoading: false };
+
+    const storedUser = localStorage.getItem("cms_user");
+    const storedToken = localStorage.getItem("cms_token");
+
+    if (storedUser && storedToken) {
+      return {
+        user: JSON.parse(storedUser),
+        token: storedToken,
+        isAuthenticated: true,
+        isLoading: false
+      };
     }
-    return { user: null, isAuthenticated: false, isLoading: false };
+
+    return {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false
+    };
   });
+
+  useEffect(() => {
+    if (authState.token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${authState.token}`;
+    } else {
+      delete axios.defaults.headers.common["Authorization"];
+    }
+  }, [authState.token]);
+
+  // Login function
   const login = useCallback(async (email, password) => {
-    setAuthState((prev) => ({ ...prev, isLoading: true }));
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const mockUser = MOCK_USERS[email.toLowerCase()];
-    if (!mockUser) {
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
-      return { success: false, error: 'User not found' };
+
+    try {
+
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+
+      const data = await loginUser(email, password);
+
+      const { token, user } = data;
+
+      localStorage.setItem("cms_user", JSON.stringify(user));
+      localStorage.setItem("cms_token", token);
+
+      setAuthState({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false
+      });
+
+      return { success: true };
+
+    } catch (error) {
+
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+
+      return {
+        success: false,
+        error: error.response?.data?.message || "Login failed"
+      };
     }
-    if (mockUser.password !== password) {
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
-      return { success: false, error: 'Invalid password' };
-    }
-    localStorage.setItem('cms_user', JSON.stringify(mockUser.user));
-    setAuthState({ user: mockUser.user, isAuthenticated: true, isLoading: false });
-    return { success: true };
+
   }, []);
+
+  //change password(first login)
+  const changePassword = useCallback(async (newPassword) => {
+
+    try {
+      const data = await changeUserPassword(newPassword);
+
+      return {
+        success: true,
+        message: data.message
+      };
+
+    } catch (error) {
+
+      return {
+        success: false,
+        error: error.response?.data?.message || "Password change failed"
+      };
+    }
+
+  }, []);
+
+  // Logout function
   const logout = useCallback(() => {
-    localStorage.removeItem('cms_user');
-    setAuthState({ user: null, isAuthenticated: false, isLoading: false });
-    window.location.href = '/login';
+
+    localStorage.removeItem("cms_user");
+    localStorage.removeItem("cms_token");
+
+    setAuthState({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false
+    });
+
+    window.location.href = "/login";
+
   }, []);
+
   const getDashboardRoute = useCallback(() => {
-    if (!authState.user) return '/login';
+
+    if (!authState.user) return "/login";
+
     return ROLE_ROUTES[authState.user.role];
+
   }, [authState.user]);
+
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, getDashboardRoute }}>
+    <AuthContext.Provider
+      value={{
+        ...authState,
+        login,
+        logout,
+        changePassword,
+        getDashboardRoute
+      }}
+    >
       {children}
-    </AuthContext.Provider>);
+    </AuthContext.Provider>
+  );
 }
+
 export function useAuth() {
+
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
   }
+
   return context;
 }
