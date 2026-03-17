@@ -45,43 +45,43 @@ import {
 } from '@/components/ui/tooltip';
 
 const menuItems = {
-  super_admin: [
-    { title: 'Dashboard', url: '/super-admin-dashboard', icon: LayoutDashboard },
+  superadmin: [
+    { title: 'Dashboard', url: '/superadmin/dashboard', icon: LayoutDashboard },
     { title: 'Users', url: '/users', icon: Users },
     { title: 'Campuses', url: '/campuses', icon: Building2 },
     { title: 'Audit Logs', url: '/audit-logs', icon: ClipboardList, badge: '4' },
     { title: 'Reports', url: '/reports', icon: BarChart3 },
     { title: 'Settings', url: '/settings', icon: Settings }
   ],
-  college_admin: [
-    { title: 'Dashboard', url: '/college-admin-dashboard', icon: LayoutDashboard },
+  collegeadmin: [
+    { title: 'Dashboard', url: '/collegeadmin/dashboard', icon: LayoutDashboard },
     { title: 'Departments', url: '/departments', icon: Building2 },
     { title: 'Staff', url: '/staff', icon: UserCog },
     { title: 'Students', url: '/students', icon: Users },
     { title: 'Courses', url: '/courses', icon: BookOpen },
     { title: 'Reports', url: '/reports', icon: BarChart3 }
   ],
-  registrar: [
-    { title: 'Dashboard', url: '/registrar-dashboard', icon: LayoutDashboard },
+  registrator: [
+    { title: 'Dashboard', url: '/registrator/dashboard', icon: LayoutDashboard },
     { title: 'Registrations', url: '/registrations', icon: FileText, badge: '12' },
     { title: 'Students', url: '/students', icon: Users },
     { title: 'Transcripts', url: '/transcripts', icon: ClipboardList },
     { title: 'Calendar', url: '/calendar', icon: Calendar }
   ],
-  finance_officer: [
-    { title: 'Dashboard', url: '/finance-dashboard', icon: LayoutDashboard },
+  finance: [
+    { title: 'Dashboard', url: '/finance/dashboard', icon: LayoutDashboard },
     { title: 'Payments', url: '/payments', icon: CreditCard, badge: '3' },
     { title: 'Fee Structure', url: '/fee-structure', icon: Wallet },
     { title: 'Reports', url: '/finance-reports', icon: BarChart3 }
   ],
   lecturer: [
-    { title: 'Dashboard', url: '/lecturer-dashboard', icon: LayoutDashboard },
+    { title: 'Dashboard', url: '/lecturer/dashboard', icon: LayoutDashboard },
     { title: 'My Classes', url: '/my-classes', icon: School },
     { title: 'Grades', url: '/grades', icon: ClipboardList },
     { title: 'Schedule', url: '/schedule', icon: Calendar }
   ],
   student: [
-    { title: 'Dashboard', url: '/student-dashboard', icon: LayoutDashboard },
+    { title: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
     { title: 'My Courses', url: '/my-courses', icon: BookOpen },
     { title: 'Results', url: '/results', icon: ClipboardList },
     { title: 'Fees', url: '/fees', icon: Wallet, badge: 'Pending' },
@@ -189,8 +189,8 @@ export function AppSidebar() {
                         asChild
                         isActive={isActive}
                         className={`group/item relative h-11 px-4 transition-all duration-300 rounded-xl ${isActive
-                            ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
+                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                          : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
                           }`}
                       >
                         <NavLink
@@ -209,8 +209,8 @@ export function AppSidebar() {
                               {item.badge && (
                                 <Badge
                                   className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 border-none transform transition-all duration-300 ${isActive
-                                      ? 'bg-white/20 text-white'
-                                      : 'bg-primary/10 text-primary group-hover/item:bg-primary/20'
+                                    ? 'bg-white/20 text-white'
+                                    : 'bg-primary/10 text-primary group-hover/item:bg-primary/20'
                                     }`}
                                 >
                                   {item.badge}

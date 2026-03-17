@@ -76,7 +76,7 @@ const App = () =>
                 {/* Registrar */}
                 <Route path="/registrator/dashboard" element={<ProtectedRoute allowedRoles={['registrator', 'superadmin']}><RegistratorDashboard /></ProtectedRoute>} />
                 {/* Finance */}
-                <Route path="/finance/dashboard" element={<ProtectedRoute allowedRoles={['finance_officer', 'superadmin']}><FinanceDashboard /></ProtectedRoute>} />
+                <Route path="/finance/dashboard" element={<ProtectedRoute allowedRoles={['finance', 'superadmin']}><FinanceDashboard /></ProtectedRoute>} />
                 {/* Lecturer */}
                 <Route path="/lecturer/dashboard" element={<ProtectedRoute allowedRoles={['lecturer', 'superadmin']}><LecturerDashboard /></ProtectedRoute>} />
                 {/* Student */}
