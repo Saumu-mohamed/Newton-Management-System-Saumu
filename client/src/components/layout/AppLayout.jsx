@@ -15,11 +15,7 @@ export function AppLayout() {
         <AppSidebar />
 
         {/* Main content area */}
-<<<<<<< HEAD
-        <div className="flex flex-col flex-1 h-full md:pl-64">
-=======
         <div className="flex flex-col flex-1 h-full md:pl-64 min-w-0">
->>>>>>> saumu-school-feature
           {/* Fixed header - z-40 to stay above content but below modals */}
           <Header />
 
