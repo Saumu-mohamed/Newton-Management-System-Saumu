@@ -26,6 +26,7 @@ import { ROLE_LABELS } from '@/types/auth';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
+
 const mockNotifications = [
   { id: 1, title: 'New registration pending', description: 'Student John Doe needs approval', time: '5 min ago', unread: true },
   { id: 2, title: 'Payment received', description: 'KES 45,000 from ABC Corp', time: '1 hour ago', unread: true },
@@ -77,7 +78,7 @@ export function Header() {
   };
 
   const getInitials = (name) => {
-    if (!name) return 'U';
+    if (!name || typeof name !== 'string') return 'U';
     return name
       .split(' ')
       .map((n) => n[0])

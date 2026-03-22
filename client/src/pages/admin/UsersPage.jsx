@@ -240,7 +240,7 @@ export default function UsersPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm sm:text-base font-medium">All Users</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto ">
           <DataTable
             columns={userColumns}
             data={filteredUsers}

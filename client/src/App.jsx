@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 // Pages
@@ -15,7 +14,7 @@ import NotFound from "./pages/NotFound";
 // Dashboards
 import SuperAdminDashboard from "./pages/dashboards/SuperAdminDashboard";
 import CollegeAdminDashboard from "./pages/dashboards/CollegeAdminDashboard";
-import RegistrarDashboard from "./pages/dashboards/RegistrarDashboard";
+import RegistratorDashboard from "./pages/dashboards/RegistratorDashboard";
 import FinanceDashboard from "./pages/dashboards/FinanceDashboard";
 import LecturerDashboard from "./pages/dashboards/LecturerDashboard";
 import StudentDashboard from "./pages/dashboards/StudentDashboard";
@@ -32,8 +31,8 @@ import StudentsPage from "./pages/academic/StudentsPage";
 import CoursesPage from "./pages/academic/CoursesPage";
 import CalendarPage from "./pages/academic/CalendarPage";
 // Registrar Pages
-import RegistrationsPage from "./pages/registrar/RegistrationsPage";
-import TranscriptsPage from "./pages/registrar/TranscriptsPage";
+import RegistrationsPage from "./pages/registrator/RegistrationsPage";
+import TranscriptsPage from "./pages/registrator/TranscriptsPage";
 // Finance Pages
 import PaymentsPage from "./pages/finance/PaymentsPage";
 import FeeStructurePage from "./pages/finance/FeeStructurePage";
@@ -49,6 +48,7 @@ import FeesPage from "./pages/student/FeesPage";
 import TimetablePage from "./pages/student/TimetablePage";
 // Profile
 import ProfilePage from "./pages/ProfilePage";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 const queryClient = new QueryClient();
 const App = () =>
   <QueryClientProvider client={queryClient}>
@@ -65,22 +65,22 @@ const App = () =>
               {/* Protected routes with layout */}
               <Route
                 element={
-                  <PrivateRoute>
+                  <ProtectedRoute>
                     <AppLayout />
-                  </PrivateRoute>
+                  </ProtectedRoute>
                 }>
                 {/* Super Admin */}
-                <Route path="/super-admin-dashboard" element={<PrivateRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></PrivateRoute>} />
+                <Route path="/superadmin/dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
                 {/* College Admin */}
-                <Route path="/college-admin-dashboard" element={<PrivateRoute allowedRoles={['college_admin', 'super_admin']}><CollegeAdminDashboard /></PrivateRoute>} />
+                <Route path="/collegeadmin/dashboard" element={<ProtectedRoute allowedRoles={['collegeadmin', 'superadmin']}><CollegeAdminDashboard /></ProtectedRoute>} />
                 {/* Registrar */}
-                <Route path="/registrar-dashboard" element={<PrivateRoute allowedRoles={['registrar', 'super_admin']}><RegistrarDashboard /></PrivateRoute>} />
+                <Route path="/registrator/dashboard" element={<ProtectedRoute allowedRoles={['registrator', 'superadmin']}><RegistratorDashboard /></ProtectedRoute>} />
                 {/* Finance */}
-                <Route path="/finance-dashboard" element={<PrivateRoute allowedRoles={['finance_officer', 'super_admin']}><FinanceDashboard /></PrivateRoute>} />
+                <Route path="/finance/dashboard" element={<ProtectedRoute allowedRoles={['finance', 'superadmin']}><FinanceDashboard /></ProtectedRoute>} />
                 {/* Lecturer */}
-                <Route path="/lecturer-dashboard" element={<PrivateRoute allowedRoles={['lecturer', 'super_admin']}><LecturerDashboard /></PrivateRoute>} />
+                <Route path="/lecturer/dashboard" element={<ProtectedRoute allowedRoles={['lecturer', 'superadmin']}><LecturerDashboard /></ProtectedRoute>} />
                 {/* Student */}
-                <Route path="/student-dashboard" element={<PrivateRoute allowedRoles={['student', 'super_admin']}><StudentDashboard /></PrivateRoute>} />
+                <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['student', 'superadmin']}><StudentDashboard /></ProtectedRoute>} />
                 {/* Admin Pages */}
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/campuses" element={<CampusesPage />} />

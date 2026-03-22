@@ -28,7 +28,7 @@ export function AreaChartCard({ title, data, dataKey, xAxisKey, color = CHART_CO
         <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/80">{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="h-[280px] w-full">
+        <div className="h-70 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -84,7 +84,7 @@ export function BarChartCard({ title, data, dataKeys, xAxisKey, colors = CHART_C
         <CardTitle className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/80">{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="h-[280px] w-full">
+        <div className="h-70 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="4 4" vertical={false} className="stroke-muted/30" />
@@ -137,7 +137,7 @@ export function PieChartCard({ title, data, colors = CHART_COLORS }) {
         <CardTitle className="text-base font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[240px]">
+        <div className="h-60">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

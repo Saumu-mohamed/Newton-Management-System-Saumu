@@ -38,14 +38,6 @@ export default function Login() {
     }
   };
 
-  const demoAccounts = [
-    { email: 'admin@cms.edu', password: 'admin123', role: 'Super Admin' },
-    { email: 'college@cms.edu', password: 'college123', role: 'College Admin' },
-    { email: 'registrar@cms.edu', password: 'registrar123', role: 'Registrar' },
-    { email: 'finance@cms.edu', password: 'finance123', role: 'Finance Officer' },
-    { email: 'lecturer@cms.edu', password: 'lecturer123', role: 'Lecturer' },
-    { email: 'student@cms.edu', password: 'student123', role: 'Student' }
-  ];
 
   const quickFillDemo = (account) => {
     setEmail(account.email);
@@ -165,46 +157,9 @@ export default function Login() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Demo Accounts Section */}
-        <Card className="border border-border/30 shadow-md bg-card/90 backdrop-blur-sm">
-          <CardHeader className="pb-3 border-b border-border/30">
-            <CardTitle className="text-sm font-semibold">Demo Credentials</CardTitle>
-            <CardDescription className="text-xs mt-1">
-              Click any role below to auto-fill test credentials
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="pt-4">
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-              {demoAccounts.map((account) => (
-                <Button
-                  key={account.email}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickFillDemo(account)}
-                  disabled={isLoading}
-                  className="h-auto py-2.5 px-2 sm:px-3 text-left border-border/50 hover:bg-secondary/50 hover:border-primary/30 transition-all group"
-                >
-                  <div className="flex flex-col items-start gap-0.5">
-                    <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {account.role}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate max-w-30">
-                      {account.email}
-                    </span>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Footer Note */}
-        <p className="text-center text-xs text-muted-foreground/70">
-          This is a demo environment. Use demo credentials above to test the system.
-        </p>
       </div>
     </div>
   );
 }
+
+
