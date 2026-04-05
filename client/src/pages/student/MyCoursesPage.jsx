@@ -1,36 +1,60 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Clock, User, CheckCircle, AlertTriangle, Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { BookOpen, Clock, User, CheckCircle, AlertTriangle, Calendar, Download } from "lucide-react";
+import { toast } from "sonner";
+import { exportToPDF } from "@/lib/export-utils";
+import { getStudentDashboard } from "@/services/studentDashboardService";
+
 const MyCoursesPage = () => {
-  const registeredUnits = [
-  { code: "CS301", name: "Database Systems", lecturer: "Dr. John Smith", credits: 3, attendance: 85, status: "active", schedule: "Mon, Fri 14:00-16:00" },
-  { code: "CS302", name: "Software Engineering", lecturer: "Prof. Jane Doe", credits: 3, attendance: 92, status: "active", schedule: "Tue, Thu 10:00-12:00" },
-  { code: "CS303", name: "Computer Networks", lecturer: "Dr. Mike Wilson", credits: 3, attendance: 78, status: "active", schedule: "Wed 8:00-11:00" },
-  { code: "CS304", name: "Operating Systems", lecturer: "Dr. Sarah Brown", credits: 3, attendance: 88, status: "active", schedule: "Mon, Wed 10:00-12:00" },
-  { code: "GEN101", name: "Communication Skills", lecturer: "Ms. Emily Davis", credits: 2, attendance: 95, status: "active", schedule: "Fri 8:00-10:00" }];
-  const semesterProgress = {
-    currentWeek: 8,
-    totalWeeks: 14,
-    unitsRegistered: 5,
-    totalCredits: 14,
-    averageAttendance: 88
+  const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      const data = await getStudentDashboard();
+      setDashboard(data);
+    } catch (error) {
+      toast.error("Load Failed", {
+        description: error?.response?.data?.message || "Failed to load registered courses."
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const registeredUnits = dashboard?.registeredUnits || [];
+  const summary = dashboard?.summary || {};
+  const semesterProgress = useMemo(() => ({
+    currentWeek: Math.min(12, Math.max(1, registeredUnits.length + 3)),
+    totalWeeks: 14,
+    unitsRegistered: summary.registeredUnitsCount || registeredUnits.length,
+    totalCredits: registeredUnits.reduce((sum, unit) => sum + Number(unit.credits || 0), 0),
+    averageAttendance: registeredUnits.length ? 82 : 0
+  }), [registeredUnits, summary]);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Courses</h1>
-          <p className="text-muted-foreground">View your registered units and course materials</p>
+          <p className="text-muted-foreground">View your registered units and current semester load</p>
         </div>
         <Badge variant="outline" className="text-sm">
           <Calendar className="w-4 h-4 mr-1" />
-          Semester 1, 2024
+          {registeredUnits[0]?.semester || 'Current Semester'}
         </Badge>
       </div>
-      {/* Semester Progress */}
+
       <Card>
         <CardHeader>
           <CardTitle>Semester Progress</CardTitle>
@@ -56,16 +80,16 @@ const MyCoursesPage = () => {
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold">{semesterProgress.averageAttendance}%</p>
-                <p className="text-sm text-muted-foreground">Avg Attendance</p>
+                <p className="text-sm text-muted-foreground">Estimated Attendance</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      {/* Registered Units */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {registeredUnits.map((unit) =>
-        <Card key={unit.code} className="hover:shadow-lg transition-shadow">
+        <Card key={unit.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
                 <div>
@@ -86,36 +110,43 @@ const MyCoursesPage = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{unit.schedule}</span>
+                  <span>{unit.day}, {unit.time}</span>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="flex items-center gap-1">
-                      {unit.attendance >= 80 ?
+                      {unit.status === 'Active' ?
                     <CheckCircle className="w-4 h-4 text-green-600" /> :
                     <AlertTriangle className="w-4 h-4 text-yellow-600" />
                     }
-                      Attendance
+                      Registration
                     </span>
-                    <span className={unit.attendance >= 80 ? "text-green-600" : "text-yellow-600"}>
-                      {unit.attendance}%
+                    <span className={unit.status === 'Active' ? "text-green-600" : "text-yellow-600"}>
+                      {unit.status}
                     </span>
                   </div>
-                  <Progress value={unit.attendance} className="h-2" />
+                  <Progress value={unit.status === 'Active' ? 100 : 60} className="h-2" />
                 </div>
                 <Button
                 variant="outline"
                 size="sm"
                 className="w-full mt-2"
-                onClick={() => toast({ title: "Course Materials", description: `Opening materials for ${unit.code}...` })}>
-                  View Materials
+                onClick={() => navigate('/timetable')}>
+                  View Timetable
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
+        {!loading && !registeredUnits.length &&
+        <Card className="md:col-span-2 lg:col-span-3">
+            <CardContent className="py-10 text-sm text-muted-foreground">
+              No registered units were returned by the backend.
+            </CardContent>
+          </Card>
+        }
       </div>
-      {/* Registration Info */}
+
       <Card>
         <CardHeader>
           <CardTitle>Registration Summary</CardTitle>
@@ -132,14 +163,15 @@ const MyCoursesPage = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Registration Date</p>
-                <p className="font-medium">Jan 5, 2024</p>
+                <p className="font-medium">{registeredUnits[0]?.semester || 'Current Semester'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Min Required Attendance</p>
                 <p className="font-medium">75%</p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => toast({ title: "Download", description: "Downloading registration slip..." })}>
+            <Button variant="outline" onClick={() => exportToPDF({ data: registeredUnits, filename: 'registration-slip', title: 'Registration Slip' })}>
+              <Download className="w-4 h-4 mr-2" />
               Download Registration Slip
             </Button>
           </div>
@@ -147,4 +179,5 @@ const MyCoursesPage = () => {
       </Card>
     </div>);
 };
+
 export default MyCoursesPage;

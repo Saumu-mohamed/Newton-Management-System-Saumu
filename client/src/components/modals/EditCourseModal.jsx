@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 const courseSchema = z.object({
   code: z.string().min(2, 'Course code is required').max(20),
   name: z.string().min(2, 'Course name must be at least 2 characters').max(100),
@@ -38,7 +39,7 @@ const courseSchema = z.object({
   semester: z.string().min(1, 'Please select a semester'),
   status: z.string().min(1, 'Please select a status')
 });
-const departments = ['Computer Science', 'Electrical Eng.', 'Business', 'Medicine', 'Mathematics', 'General Studies'];
+
 const semesters = ['Sem 1', 'Sem 2', 'Sem 3'];
 const statuses = ['Active', 'Inactive', 'Archived'];
 export function EditCourseModal({ open, onOpenChange, course, onSubmit }) {
@@ -140,20 +141,9 @@ export function EditCourseModal({ open, onOpenChange, course, onSubmit }) {
               render={({ field }) =>
               <FormItem>
                   <FormLabel>Department *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {departments.map((dept) =>
-                    <SelectItem key={dept} value={dept}>
-                          {dept}
-                        </SelectItem>
-                    )}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="Enter department name" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               } />

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,17 +13,9 @@ import {
   Plus,
   Download } from
 'lucide-react';
-const academicCalendar = [
-{ id: 1, event: 'Semester 2 Begins', date: '2024-01-08', endDate: null, type: 'Academic', status: 'Completed' },
-{ id: 2, event: 'Late Registration Deadline', date: '2024-01-22', endDate: null, type: 'Deadline', status: 'Completed' },
-{ id: 3, event: 'CAT 1 Examinations', date: '2024-02-12', endDate: '2024-02-16', type: 'Exam', status: 'Completed' },
-{ id: 4, event: 'Mid-Semester Break', date: '2024-03-11', endDate: '2024-03-15', type: 'Holiday', status: 'Upcoming' },
-{ id: 5, event: 'CAT 2 Examinations', date: '2024-03-25', endDate: '2024-03-29', type: 'Exam', status: 'Upcoming' },
-{ id: 6, event: 'Fee Payment Deadline', date: '2024-04-05', endDate: null, type: 'Deadline', status: 'Upcoming' },
-{ id: 7, event: 'Last Day of Classes', date: '2024-04-26', endDate: null, type: 'Academic', status: 'Upcoming' },
-{ id: 8, event: 'Final Examinations', date: '2024-05-06', endDate: '2024-05-24', type: 'Exam', status: 'Upcoming' },
-{ id: 9, event: 'Semester 2 Ends', date: '2024-05-24', endDate: null, type: 'Academic', status: 'Upcoming' },
-{ id: 10, event: 'Graduation Ceremony', date: '2024-06-14', endDate: null, type: 'Event', status: 'Upcoming' }];
+import { exportToCSV } from '@/lib/export-utils';
+import { createAcademicEvent, getAcademicCalendar } from '@/services/academicService';
+
 const calendarColumns = [
 { key: 'event', label: 'Event', sortable: true },
 { key: 'date', label: 'Start Date', sortable: true },
@@ -38,7 +31,7 @@ const calendarColumns = [
   <Badge variant={
   value === 'Exam' ? 'destructive' :
   value === 'Deadline' ? 'default' :
-  value === 'Holiday' ? 'secondary' : 'outline'
+  value === 'Meeting' ? 'secondary' : 'outline'
   }>
         {value}
       </Badge>
@@ -52,28 +45,64 @@ const calendarColumns = [
         {value}
       </Badge>
 }];
+
 export default function CalendarPage() {
-  const upcomingEvents = academicCalendar.filter((e) => e.status === 'Upcoming');
-  const completedEvents = academicCalendar.filter((e) => e.status === 'Completed');
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadCalendar = async () => {
+    try {
+      setLoading(true);
+      const data = await getAcademicCalendar();
+      setEvents(data.events || []);
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load academic calendar.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCalendar();
+  }, []);
+
+  const upcomingEvents = useMemo(() => events.filter((event) => event.status === 'Upcoming'), [events]);
+  const completedEvents = useMemo(() => events.filter((event) => event.status === 'Completed'), [events]);
+  const progress = events.length > 0 ? Math.round((completedEvents.length / events.length) * 100) : 0;
+
+  const handleQuickAdd = async () => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + 7);
+    await createAcademicEvent({
+      title: `Academic Review ${startDate.toISOString().split('T')[0]}`,
+      type: 'meeting',
+      startDate: startDate.toISOString(),
+      location: 'Senate Boardroom',
+      description: 'Generated from academic calendar page.'
+    });
+    toast.success('Academic Event Created', { description: 'A new upcoming event has been added.' });
+    await loadCalendar();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Academic Calendar</h1>
-          <p className="text-muted-foreground">Semester 2, 2023/2024 Academic Year</p>
+          <p className="text-muted-foreground">Live academic event schedule</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.success('Exporting', { description: 'Exporting calendar...' })}>
+          <Button variant="outline" size="sm" onClick={() => exportToCSV({ data: events, filename: 'academic-calendar' })}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm" onClick={() => toast.info('Add Event', { description: 'Event form coming soon' })}>
+          <Button size="sm" onClick={handleQuickAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add Event
           </Button>
         </div>
       </div>
-      {/* Progress */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium">Semester Progress</CardTitle>
@@ -81,69 +110,21 @@ export default function CalendarPage() {
         <CardContent>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Week 10 of 18</span>
-              <span className="text-muted-foreground">55% complete</span>
+              <span>{completedEvents.length} completed of {events.length} events</span>
+              <span className="text-muted-foreground">{progress}% complete</span>
             </div>
-            <Progress value={55} className="h-2" />
+            <Progress value={progress} className="h-2" />
           </div>
         </CardContent>
       </Card>
-      {/* Stats */}
+
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{academicCalendar.length}</p>
-                <p className="text-xs text-muted-foreground">Total Events</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{upcomingEvents.length}</p>
-                <p className="text-xs text-muted-foreground">Upcoming</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{completedEvents.length}</p>
-                <p className="text-xs text-muted-foreground">Completed</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{academicCalendar.filter((e) => e.type === 'Exam').length}</p>
-                <p className="text-xs text-muted-foreground">Exam Periods</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Calendar className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{events.length}</p><p className="text-xs text-muted-foreground">Total Events</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Clock className="h-5 w-5 text-blue-600" /></div><div><p className="text-2xl font-bold">{upcomingEvents.length}</p><p className="text-xs text-muted-foreground">Upcoming</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><CheckCircle className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{completedEvents.length}</p><p className="text-xs text-muted-foreground">Completed</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-destructive/10"><AlertCircle className="h-5 w-5 text-destructive" /></div><div><p className="text-2xl font-bold">{events.filter((event) => event.type === 'Exam').length}</p><p className="text-xs text-muted-foreground">Exam Periods</p></div></div></CardContent></Card>
       </div>
-      {/* Upcoming Events */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium">Upcoming Events</CardTitle>
@@ -172,17 +153,14 @@ export default function CalendarPage() {
           </div>
         </CardContent>
       </Card>
-      {/* Table */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium">All Events</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={calendarColumns}
-            data={academicCalendar}
-            searchPlaceholder="Search events..."
-            pageSize={10} />
+          {loading ? <div className="py-8 text-sm text-muted-foreground">Loading calendar...</div> :
+          <DataTable columns={calendarColumns} data={events} searchPlaceholder="Search events..." pageSize={10} />}
         </CardContent>
       </Card>
     </div>);

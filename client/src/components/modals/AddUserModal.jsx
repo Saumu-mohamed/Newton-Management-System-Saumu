@@ -37,7 +37,7 @@ const userSchema = z.object({
   department: z.string().min(1, 'Please select a department'),
   phone: z.string().optional()
 });
-const roles = ['Student', 'Lecturer', 'Staff', 'Finance Officer', 'Registrar', 'College Admin'];
+const roles = ['Student', 'Lecturer', 'Finance Officer', 'Registrar', 'College Admin'];
 const campuses = ['Main', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'];
 const departments = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Mathematics', 'Administration'];
 export function AddUserModal({ open, onOpenChange, onSubmit }) {
@@ -59,13 +59,12 @@ export function AddUserModal({ open, onOpenChange, onSubmit }) {
       if (onSubmit) {
         await onSubmit(data);
       }
-      toast.success('User Created', {
-        description: `${data.name} has been added successfully`
-      });
       form.reset();
       onOpenChange(false);
     } catch (error) {
-      toast.error('Error', { description: 'Failed to create user' });
+      toast.error('Create Failed', {
+        description: error?.response?.data?.message || 'Failed to create user.'
+      });
     } finally {
       setIsSubmitting(false);
     }

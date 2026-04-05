@@ -20,6 +20,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const studentSchema = z.object({
   regNo: z.string().min(5, 'Registration number is required'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -29,9 +30,8 @@ const studentSchema = z.object({
   campus: z.string().min(1, 'Campus is required'),
   status: z.enum(['Active', 'Probation', 'Suspended', 'Graduated'])
 });
-const courses = ['BSc Computer Science', 'BEng Electrical', 'BEng Civil', 'BCom Accounting', 'BCom Marketing', 'MBBS Medicine'];
-const campuses = ['Main', 'Mombasa', 'Kisumu', 'Nakuru'];
-export function EditStudentModal({ open, onOpenChange, student, onSave }) {
+
+export function EditStudentModal({ open, onOpenChange, student, onSave, courses = [], campuses = [] }) {
   const form = useForm({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -114,8 +114,8 @@ export function EditStudentModal({ open, onOpenChange, student, onSave }) {
                     <SelectValue placeholder="Select course" />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses.map((c) =>
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    {courses.map((courseOption) =>
+                    <SelectItem key={courseOption} value={courseOption}>{courseOption}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -146,8 +146,8 @@ export function EditStudentModal({ open, onOpenChange, student, onSave }) {
                     <SelectValue placeholder="Select campus" />
                   </SelectTrigger>
                   <SelectContent>
-                    {campuses.map((c) =>
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    {campuses.map((campusOption) =>
+                    <SelectItem key={campusOption} value={campusOption}>{campusOption}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>

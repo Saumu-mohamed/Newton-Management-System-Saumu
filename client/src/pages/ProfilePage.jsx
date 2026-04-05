@@ -19,49 +19,86 @@ import {
   FormLabel,
   FormMessage } from
 '@/components/ui/form';
-import { User, Mail, Phone, Building, BookOpen, Shield, Pencil, Save, X, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Building, BookOpen, Shield, Pencil, Save, X, Loader2, Key } from 'lucide-react';
 import { toast } from 'sonner';
+
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
   phone: z.string().optional()
 });
+
+const passwordSchema = z.object({
+  newPassword: z.string().min(6, 'Password must be at least 6 characters')
+});
+
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm({
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const profileForm = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || '',
-      phone: ''
+      phone: user?.phone || ''
     }
   });
-  const getInitials = (name) => {
-    return name.split(' ').map((n) => n[0]).join('').toUpperCase();
-  };
-  const handleSubmit = async (data) => {
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      newPassword: ''
+    }
+  });
+
+  const getInitials = (name) => name.split(' ').map((n) => n[0]).join('').toUpperCase();
+
+  const handleProfileSubmit = async (data) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    toast.success('Profile Updated', {
-      description: 'Your profile has been updated successfully.'
-    });
+    const result = await updateProfile(data);
+    if (result.success) {
+      toast.success('Profile Updated', {
+        description: result.message || 'Your profile has been updated successfully.'
+      });
+      setIsEditing(false);
+    } else {
+      toast.error('Update Failed', {
+        description: result.error
+      });
+    }
     setIsSubmitting(false);
-    setIsEditing(false);
   };
+
+  const handlePasswordSubmit = async ({ newPassword }) => {
+    setIsChangingPassword(true);
+    const result = await changePassword(newPassword);
+    if (result.success) {
+      toast.success('Password Updated', {
+        description: result.message || 'Your password has been updated successfully.'
+      });
+      passwordForm.reset();
+    } else {
+      toast.error('Password Update Failed', {
+        description: result.error
+      });
+    }
+    setIsChangingPassword(false);
+  };
+
   const handleCancel = () => {
-    form.reset({
+    profileForm.reset({
       name: user?.name || '',
-      phone: ''
+      phone: user?.phone || ''
     });
     setIsEditing(false);
   };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-100">
         <p className="text-muted-foreground">Please log in to view your profile.</p>
       </div>);
   }
+
   return (
     <div className="space-y-6">
       <div>
@@ -71,7 +108,6 @@ export default function ProfilePage() {
         </p>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Profile Card */}
         <Card className="md:col-span-1">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -106,7 +142,7 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-        {/* Account Details */}
+
         <Card className="md:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -124,10 +160,10 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             {isEditing ?
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4">
                   <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="name"
                   render={({ field }) =>
                   <FormItem>
@@ -144,12 +180,9 @@ export default function ProfilePage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{user.email}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Email cannot be changed. Contact admin for assistance.
-                    </p>
                   </div>
                   <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="phone"
                   render={({ field }) =>
                   <FormItem>
@@ -202,7 +235,7 @@ export default function ProfilePage() {
                     </Label>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-muted-foreground">Not set</span>
+                      <span className="font-medium">{user.phone || 'Not set'}</span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -214,34 +247,12 @@ export default function ProfilePage() {
                       <span className="font-medium">{ROLE_LABELS[user.role]}</span>
                     </div>
                   </div>
-                  {user.campus &&
-                <div className="space-y-1">
-                      <Label className="text-muted-foreground text-xs uppercase tracking-wide">
-                        Campus
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{user.campus}</span>
-                      </div>
-                    </div>
-                }
-                  {user.department &&
-                <div className="space-y-1">
-                      <Label className="text-muted-foreground text-xs uppercase tracking-wide">
-                        Department
-                      </Label>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{user.department}</span>
-                      </div>
-                    </div>
-                }
                 </div>
               </div>
             }
           </CardContent>
         </Card>
-        {/* Security Section */}
+
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>Security</CardTitle>
@@ -250,19 +261,26 @@ export default function ProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg border">
-              <div className="space-y-1">
-                <p className="font-medium">Password</p>
-                <p className="text-sm text-muted-foreground">
-                  Last changed: Never
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => toast.info('Password change will be available when connected to Lovable Cloud')}>
-                Change Password
-              </Button>
-            </div>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="flex items-end gap-4 p-4 rounded-lg border">
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) =>
+                  <FormItem className="flex-1">
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="Enter a new password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  } />
+                <Button type="submit" variant="outline" disabled={isChangingPassword}>
+                  {isChangingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Key className="h-4 w-4 mr-2" />}
+                  Change Password
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

@@ -19,6 +19,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const studentSchema = z.object({
   regNo: z.string().min(5, 'Registration number is required'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -28,9 +29,8 @@ const studentSchema = z.object({
   campus: z.string().min(1, 'Campus is required'),
   status: z.enum(['Active', 'Probation', 'Suspended', 'Graduated'])
 });
-const courses = ['BSc Computer Science', 'BEng Electrical', 'BEng Civil', 'BCom Accounting', 'BCom Marketing', 'MBBS Medicine'];
-const campuses = ['Main', 'Mombasa', 'Kisumu', 'Nakuru'];
-export function AddStudentModal({ open, onOpenChange, onAdd }) {
+
+export function AddStudentModal({ open, onOpenChange, onAdd, courses = [], campuses = [] }) {
   const form = useForm({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -96,8 +96,8 @@ export function AddStudentModal({ open, onOpenChange, onAdd }) {
                     <SelectValue placeholder="Select course" />
                   </SelectTrigger>
                   <SelectContent>
-                    {courses.map((c) =>
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    {courses.map((course) =>
+                    <SelectItem key={course} value={course}>{course}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -127,8 +127,8 @@ export function AddStudentModal({ open, onOpenChange, onAdd }) {
                     <SelectValue placeholder="Select campus" />
                   </SelectTrigger>
                   <SelectContent>
-                    {campuses.map((c) =>
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    {campuses.map((campus) =>
+                    <SelectItem key={campus} value={campus}>{campus}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>

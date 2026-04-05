@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +14,16 @@ import {
   Trash2 } from
 'lucide-react';
 import { AddCourseModal, EditCourseModal, ViewCourseModal, ConfirmModal } from '@/components/modals';
-const courses = [
-{ id: 1, code: 'CS 301', name: 'Database Systems', department: 'Computer Science', credits: 3, students: 85, lecturer: 'Dr. J. Kiprop', semester: 'Sem 2', status: 'Active' },
-{ id: 2, code: 'CS 305', name: 'Software Engineering', department: 'Computer Science', credits: 3, students: 72, lecturer: 'Prof. M. Ochieng', semester: 'Sem 2', status: 'Active' },
-{ id: 3, code: 'CS 310', name: 'Computer Networks', department: 'Computer Science', credits: 3, students: 68, lecturer: 'Dr. P. Wanjiku', semester: 'Sem 2', status: 'Active' },
-{ id: 4, code: 'ENG 201', name: 'Electrical Circuits', department: 'Electrical Eng.', credits: 4, students: 92, lecturer: 'Prof. S. Wanjiku', semester: 'Sem 2', status: 'Active' },
-{ id: 5, code: 'BUS 101', name: 'Intro to Accounting', department: 'Business', credits: 3, students: 120, lecturer: 'Dr. G. Muthoni', semester: 'Sem 2', status: 'Active' },
-{ id: 6, code: 'MED 401', name: 'Clinical Medicine I', department: 'Medicine', credits: 6, students: 45, lecturer: 'Prof. M. Njeri', semester: 'Sem 2', status: 'Active' },
-{ id: 7, code: 'MA 201', name: 'Statistics', department: 'Mathematics', credits: 3, students: 180, lecturer: 'Prof. D. Mwangi', semester: 'Sem 2', status: 'Active' },
-{ id: 8, code: 'GS 300', name: 'Communication Skills', department: 'General Studies', credits: 2, students: 250, lecturer: 'Ms. A. Njeri', semester: 'Sem 2', status: 'Active' }];
+import {
+  createAcademicCourse,
+  deleteAcademicCourse,
+  getAcademicCourses,
+  updateAcademicCourse } from
+'@/services/academicService';
+
 export default function CoursesPage() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
   const [isEditCourseOpen, setIsEditCourseOpen] = useState(false);
   const [isViewCourseOpen, setIsViewCourseOpen] = useState(false);
@@ -31,25 +31,74 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [viewCourse, setViewCourse] = useState(null);
   const [deleteCourse, setDeleteCourse] = useState(null);
-  const totalStudents = courses.reduce((sum, c) => sum + c.students, 0);
-  const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      const data = await getAcademicCourses();
+      setCourses(data.courses || []);
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load courses.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const totalStudents = useMemo(() => courses.reduce((sum, course) => sum + Number(course.students || 0), 0), [courses]);
+  const totalCredits = useMemo(() => courses.reduce((sum, course) => sum + Number(course.credits || 0), 0), [courses]);
+
   const handleEditCourse = (course) => {
     setSelectedCourse(course);
     setIsEditCourseOpen(true);
   };
+
   const handleViewCourse = (course) => {
     setViewCourse(course);
     setIsViewCourseOpen(true);
   };
+
   const handleDeleteCourse = (course) => {
     setDeleteCourse(course);
     setIsDeleteCourseOpen(true);
   };
+
   const confirmDeleteCourse = async () => {
-    if (deleteCourse) {
+    if (!deleteCourse) return;
+    try {
+      await deleteAcademicCourse(deleteCourse.id);
       toast.success('Course Deleted', { description: `${deleteCourse.name} has been deleted successfully` });
+      setIsDeleteCourseOpen(false);
+      setDeleteCourse(null);
+      await loadCourses();
+    } catch (error) {
+      toast.error('Delete Failed', { description: error?.response?.data?.message || 'Failed to delete course.' });
     }
   };
+
+  const handleCreateCourse = async (data) => {
+    try {
+      await createAcademicCourse(data);
+      await loadCourses();
+    } catch (error) {
+      toast.error('Create Failed', { description: error?.response?.data?.message || 'Failed to create course.' });
+      throw error;
+    }
+  };
+
+  const handleUpdateCourse = async (data) => {
+    try {
+      await updateAcademicCourse(data.id, data);
+      await loadCourses();
+    } catch (error) {
+      toast.error('Update Failed', { description: error?.response?.data?.message || 'Failed to update course.' });
+      throw error;
+    }
+  };
+
   const courseColumns = [
   { key: 'code', label: 'Code', sortable: true },
   { key: 'name', label: 'Course Name', sortable: true },
@@ -61,8 +110,7 @@ export default function CoursesPage() {
   {
     key: 'status',
     label: 'Status',
-    render: (value) =>
-    <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
+    render: (value) => <Badge variant={value === 'Active' ? 'default' : 'secondary'}>{value}</Badge>
   },
   {
     key: 'actions',
@@ -80,9 +128,9 @@ export default function CoursesPage() {
           </Button>
         </div>
   }];
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Courses</h1>
@@ -93,89 +141,27 @@ export default function CoursesPage() {
           <span className="hidden sm:inline">Add Course</span>
         </Button>
       </div>
-      {/* Stats */}
+
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{courses.length}</p>
-                <p className="text-xs text-muted-foreground">Total Courses</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalStudents}</p>
-                <p className="text-xs text-muted-foreground">Total Enrollments</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Clock className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalCredits}</p>
-                <p className="text-xs text-muted-foreground">Total Credits</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <BookOpen className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{courses.filter((c) => c.status === 'Active').length}</p>
-                <p className="text-xs text-muted-foreground">Active This Semester</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><BookOpen className="h-5 w-5 text-primary" /></div><div><p className="text-xl sm:text-2xl font-bold">{courses.length}</p><p className="text-xs text-muted-foreground">Total Courses</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{totalStudents}</p><p className="text-xs text-muted-foreground">Total Enrollments</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><Clock className="h-5 w-5 text-green-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{totalCredits}</p><p className="text-xs text-muted-foreground">Total Credits</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><BookOpen className="h-5 w-5 text-yellow-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{courses.filter((course) => course.status === 'Active').length}</p><p className="text-xs text-muted-foreground">Active This Semester</p></div></div></CardContent></Card>
       </div>
-      {/* Table */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm sm:text-base font-medium">All Courses</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <DataTable
-            columns={courseColumns}
-            data={courses}
-            searchPlaceholder="Search courses..."
-            pageSize={10} />
+          {loading ? <div className="py-8 text-sm text-muted-foreground">Loading courses...</div> :
+          <DataTable columns={courseColumns} data={courses} searchPlaceholder="Search courses..." pageSize={10} />}
         </CardContent>
       </Card>
-      {/* Add Course Modal */}
-      <AddCourseModal
-        open={isAddCourseOpen}
-        onOpenChange={setIsAddCourseOpen} />
-      {/* Edit Course Modal */}
-      <EditCourseModal
-        open={isEditCourseOpen}
-        onOpenChange={setIsEditCourseOpen}
-        course={selectedCourse} />
-      {/* View Course Modal */}
-      <ViewCourseModal
-        open={isViewCourseOpen}
-        onOpenChange={setIsViewCourseOpen}
-        course={viewCourse} />
-      {/* Delete Course Confirmation */}
+
+      <AddCourseModal open={isAddCourseOpen} onOpenChange={setIsAddCourseOpen} onSubmit={handleCreateCourse} />
+      <EditCourseModal open={isEditCourseOpen} onOpenChange={setIsEditCourseOpen} course={selectedCourse} onSubmit={handleUpdateCourse} />
+      <ViewCourseModal open={isViewCourseOpen} onOpenChange={setIsViewCourseOpen} course={viewCourse} />
       <ConfirmModal
         open={isDeleteCourseOpen}
         onOpenChange={setIsDeleteCourseOpen}

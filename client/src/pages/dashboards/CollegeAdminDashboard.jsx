@@ -1,95 +1,134 @@
-import { StatsCard } from '@/components/dashboard/StatsCard';
-import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
-import { AreaChartCard, BarChartCard, PieChartCard } from '@/components/dashboard/Charts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
-  Users,
-  BookOpen,
-  GraduationCap,
   AlertTriangle,
+  BarChart3,
+  BookOpen,
   Building2,
   Calendar,
-  FileText,
-  UserCog,
-  BarChart3,
-  Wallet,
   Eye,
-  Mail
-} from
-  'lucide-react';
-import { useState } from 'react';
+  FileText,
+  GraduationCap,
+  Mail,
+  UserCog,
+  Users,
+  Wallet
+} from 'lucide-react';
+import { AreaChartCard, BarChartCard, PieChartCard } from '@/components/dashboard/Charts';
+import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
+import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ConfirmModal } from '@/components/modals';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  approveCollegeApproval,
+  getCollegeAdminDashboard,
+  notifyProbationStudent
+} from '@/services/collegeAdminDashboardService';
 
-// Mock data for college admin
-const enrollmentByFaculty = [
-  { faculty: 'Engineering', students: 1250, target: 1400 },
-  { faculty: 'Business', students: 980, target: 1000 },
-  { faculty: 'Arts & Humanities', students: 720, target: 800 },
-  { faculty: 'Science', students: 890, target: 950 },
-  { faculty: 'Health Sciences', students: 560, target: 600 }];
-const enrollmentByDepartment = [
-  { department: 'Computer Science', faculty: 'Engineering', students: 320, lecturers: 18 },
-  { department: 'Electrical Eng.', faculty: 'Engineering', students: 280, lecturers: 15 },
-  { department: 'Civil Engineering', faculty: 'Engineering', students: 245, lecturers: 14 },
-  { department: 'Accounting', faculty: 'Business', students: 380, lecturers: 12 },
-  { department: 'Marketing', faculty: 'Business', students: 290, lecturers: 10 },
-  { department: 'Medicine', faculty: 'Health Sciences', students: 180, lecturers: 22 },
-  { department: 'Nursing', faculty: 'Health Sciences', students: 220, lecturers: 16 }];
-const feeCollectionData = [
-  { name: 'Fully Paid', value: 62 },
-  { name: 'Partial', value: 23 },
-  { name: 'Overdue', value: 10 },
-  { name: 'Pending', value: 5 }];
-const graduationRateData = [
-  { year: '2020', rate: 82 },
-  { year: '2021', rate: 85 },
-  { year: '2022', rate: 87 },
-  { year: '2023', rate: 89 },
-  { year: '2024', rate: 91 }];
-const probationStudents = [
-  { id: 1, name: 'Peter Kamau', regNo: 'CS/2023/001', department: 'Computer Science', gpa: 1.8, status: 'Probation', semester: 3 },
-  { id: 2, name: 'Jane Wambui', regNo: 'BUS/2022/045', department: 'Business Admin', gpa: 1.9, status: 'Warning', semester: 5 },
-  { id: 3, name: 'Kevin Ochieng', regNo: 'ENG/2023/089', department: 'Civil Engineering', gpa: 1.7, status: 'Probation', semester: 4 },
-  { id: 4, name: 'Mary Akinyi', regNo: 'MED/2022/012', department: 'Medicine', gpa: 1.85, status: 'Warning', semester: 6 },
-  { id: 5, name: 'David Mwangi', regNo: 'CS/2023/056', department: 'Computer Science', gpa: 1.65, status: 'Probation', semester: 2 }];
-const upcomingEvents = [
-  { id: 1, event: 'Mid-Semester Exams', date: 'Mar 15 - 22, 2024', type: 'exam', location: 'All Campuses' },
-  { id: 2, event: 'CAT 2 Deadline', date: 'Mar 10, 2024', type: 'deadline', location: 'Academic Block' },
-  { id: 3, event: 'Faculty Board Meeting', date: 'Mar 5, 2024', type: 'meeting', location: 'Admin Building' },
-  { id: 4, event: 'Graduation Rehearsal', date: 'Apr 20, 2024', type: 'event', location: 'Main Grounds' },
-  { id: 5, event: 'Open Day', date: 'Apr 25, 2024', type: 'event', location: 'Main Campus' }];
-const pendingApprovalsData = [
-  { id: 1, type: 'Leave Request', from: 'Dr. J. Ochieng', department: 'Computer Science', date: '2024-01-15', status: 'Pending' },
-  { id: 2, type: 'Course Addition', from: 'HOD Engineering', department: 'Engineering', date: '2024-01-14', status: 'Urgent' },
-  { id: 3, type: 'Budget Request', from: 'Dean Arts', department: 'Arts & Humanities', date: '2024-01-13', status: 'Pending' },
-  { id: 4, type: 'Staff Promotion', from: 'HR Department', department: 'Admin', date: '2024-01-12', status: 'Review' }];
-const lecturerWorkload = [
-  { id: 1, name: 'Dr. James Kiprop', department: 'Computer Science', units: 4, students: 240, workload: 'High' },
-  { id: 2, name: 'Prof. Mary Ochieng', department: 'Business', units: 3, students: 180, workload: 'Normal' },
-  { id: 3, name: 'Dr. Peter Wanjiku', department: 'Engineering', units: 5, students: 320, workload: 'Overloaded' },
-  { id: 4, name: 'Dr. Susan Njeri', department: 'Medicine', units: 3, students: 90, workload: 'Normal' }];
+function EmptyState({ message }) {
+  return (
+    <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
+}
 
 export default function CollegeAdminDashboard() {
   const navigate = useNavigate();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        const data = await getCollegeAdminDashboard();
+        setDashboardData(data);
+        setError('');
+      } catch (fetchError) {
+        console.error('Failed to load college admin dashboard:', fetchError);
+        setError(fetchError?.response?.data?.message || 'Failed to load dashboard data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  const overview = dashboardData?.overview || {};
+  const kpis = dashboardData?.kpis || {};
+  const enrollmentByFaculty = dashboardData?.enrollmentByFaculty || [];
+  const enrollmentByDepartment = dashboardData?.enrollmentByDepartment || [];
+  const feeCollectionData = dashboardData?.feeCollectionData || [];
+  const graduationRateData = dashboardData?.graduationRateData || [];
+  const probationStudents = dashboardData?.probationStudents || [];
+  const upcomingEvents = dashboardData?.upcomingEvents || [];
+  const pendingApprovalsData = dashboardData?.pendingApprovals || [];
+  const lecturerWorkload = dashboardData?.lecturerWorkload || [];
+  const feeClearanceSummary = dashboardData?.feeClearanceSummary || [];
+
+  const totalStudents = kpis.totalStudents || 0;
+  const totalTarget = kpis.totalTarget || 0;
+  const enrollmentPercentage = kpis.enrollmentPercentage || 0;
+  const activeCourses = kpis.activeCourses || 0;
+  const graduationRate = kpis.graduationRate || 0;
+  const probationCount = kpis.probationCount || 0;
+  const activeCoursesChange = activeCourses > 0 ? `${activeCourses.toLocaleString()} active courses returned` : 'No course data returned';
+  const graduationRateChange = graduationRateData.length > 0 ? `${graduationRateData.length} trend points returned` : 'No graduation trend data returned';
+  const probationChange = probationCount > 0 ? `${probationCount.toLocaleString()} flagged students returned` : 'No warnings returned';
+
+  const handleApproval = async (item) => {
+    try {
+      const response = await approveCollegeApproval(item.id);
+
+      setDashboardData((current) => current ? {
+        ...current,
+        pendingApprovals: (current.pendingApprovals || []).filter((approval) => approval.id !== item.id)
+      } : current);
+
+      toast.success('Approved', {
+        description: response?.message || `${item.type} from ${item.from} has been approved.`
+      });
+    } catch (approvalError) {
+      toast.error('Approval Failed', {
+        description: approvalError?.response?.data?.message || 'Failed to approve request.'
+      });
+    } finally {
+      setIsConfirmOpen(false);
+      setConfirmConfig(null);
+    }
+  };
 
   const handleReview = (item) => {
     setConfirmConfig({
       title: `Review ${item.type}`,
       description: `Reviewing ${item.type} from ${item.from}. Would you like to approve this request?`,
       confirmText: 'Approve',
-      onConfirm: () => {
-        toast.success('Approved', { description: `${item.type} from ${item.from} has been approved.` });
-      }
+      onConfirm: () => handleApproval(item)
     });
     setIsConfirmOpen(true);
+  };
+
+  const handleSendWarning = async (row) => {
+    try {
+      const response = await notifyProbationStudent(row.studentId);
+      toast.success('Email Sent', {
+        description: response?.message || `Warning email sent to ${row.name}`
+      });
+    } catch (notifyError) {
+      toast.error('Email Failed', {
+        description: notifyError?.response?.data?.message || 'Failed to send warning email.'
+      });
+    }
   };
 
   const probationColumns = [
@@ -111,11 +150,12 @@ export default function CollegeAdminDashboard() {
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => navigate('/students')}>
             <Eye className="h-3 w-3" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toast.success('Email Sent', { description: `Warning email sent to ${row.name}` })}>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSendWarning(row)}>
             <Mail className="h-3 w-3" />
           </Button>
         </div>
-    }];
+    }
+  ];
 
   const departmentColumns = [
     { key: 'department', label: 'Department', sortable: true },
@@ -125,8 +165,9 @@ export default function CollegeAdminDashboard() {
     {
       key: 'ratio',
       label: 'Student:Lecturer',
-      render: (_, row) => `${Math.round(row.students / row.lecturers)}:1`
-    }];
+      render: (_, row) => row.lecturers > 0 ? `${Math.round(row.students / row.lecturers)}:1` : 'Unassigned'
+    }
+  ];
 
   const lecturerColumns = [
     { key: 'name', label: 'Lecturer', sortable: true },
@@ -140,19 +181,18 @@ export default function CollegeAdminDashboard() {
         <Badge variant={value === 'Overloaded' ? 'destructive' : value === 'High' ? 'default' : 'secondary'}>
           {value}
         </Badge>
-    }];
-  const totalStudents = enrollmentByFaculty.reduce((sum, f) => sum + f.students, 0);
-  const totalTarget = enrollmentByFaculty.reduce((sum, f) => sum + f.target, 0);
-  const enrollmentPercentage = totalStudents / totalTarget * 100;
+    }
+  ];
+
   return (
     <div className="space-y-8 w-full animate-in fade-in duration-700">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
           <h1 className="h1-page mb-1">College Admin Dashboard</h1>
           <p className="body-md text-muted-foreground flex items-center gap-2">
-            Main Campus
+            {overview.campusName || 'College Admin'}
             <span className="w-1 h-1 rounded-full bg-border" />
-            Academic & Administrative Overview
+            {overview.subtitle || 'Backend-connected dashboard overview'}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -166,67 +206,91 @@ export default function CollegeAdminDashboard() {
           </Button>
         </div>
       </div>
-      {/* KPI Cards */}
+
+      {loading && (
+        <Card className="border-none shadow-premium">
+          <CardContent className="flex items-center justify-center py-16 text-sm text-muted-foreground">
+            Loading college admin dashboard...
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="border-destructive/30 bg-destructive/5 shadow-none">
+          <CardContent className="py-4 text-sm text-destructive">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid-cards">
         <StatsCard
           title="Total Students"
           value={totalStudents.toLocaleString()}
-          change={`${enrollmentPercentage.toFixed(0)}% of target`}
+          change={totalTarget > 0 ? `${enrollmentPercentage.toFixed(0)}% of target` : 'No enrollment target returned'}
           changeType="positive"
           icon={Users} />
         <StatsCard
           title="Active Courses"
-          value="186"
-          change="12 new this semester"
+          value={activeCourses.toLocaleString()}
+          change={activeCoursesChange}
           changeType="positive"
           icon={BookOpen} />
         <StatsCard
           title="Graduation Rate"
-          value="91%"
-          change="+2% from last year"
+          value={`${graduationRate}%`}
+          change={graduationRateChange}
           changeType="positive"
           icon={GraduationCap} />
         <StatsCard
           title="On Probation"
-          value="47"
-          change="Requires attention"
+          value={probationCount.toLocaleString()}
+          change={probationChange}
           changeType="negative"
           icon={AlertTriangle} />
       </div>
-      {/* Enrollment Progress */}
+
       <Card className="glass-premium overflow-hidden border-none shadow-premium">
         <CardHeader className="pb-4 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg font-bold tracking-tight">Enrollment Target Progress</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">Academic Intake Status 2024/2025</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Academic Intake Status</p>
             </div>
-            <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary border-none">{enrollmentPercentage.toFixed(0)}% ACHIEVED</Badge>
+            <Badge variant="secondary" className="px-3 py-1 font-bold bg-primary/10 text-primary border-none">
+              {enrollmentPercentage.toFixed(0)}% ACHIEVED
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="pb-8">
-          <div className="grid gap-6 md:grid-cols-2">
-            {enrollmentByFaculty.map((faculty) =>
-              <div key={faculty.faculty} className="space-y-3 p-4 rounded-2xl bg-white/50 border border-border/20 shadow-sm transition-all hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold tracking-tight">{faculty.faculty}</span>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase">
-                    {faculty.students} / {faculty.target} STUDENTS
-                  </span>
+          {enrollmentByFaculty.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {enrollmentByFaculty.map((faculty) =>
+                <div key={faculty.faculty} className="space-y-3 p-4 rounded-2xl bg-white/50 border border-border/20 shadow-sm transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold tracking-tight">{faculty.faculty}</span>
+                    <span className="text-[10px] font-black text-muted-foreground uppercase">
+                      {faculty.students} / {faculty.target} STUDENTS
+                    </span>
+                  </div>
+                  <Progress
+                    value={faculty.target > 0 ? faculty.students / faculty.target * 100 : 0}
+                    className="h-2.5 shadow-inner bg-muted" />
+                  <div className="flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-primary">
+                      {faculty.target > 0 ? (faculty.students / faculty.target * 100).toFixed(0) : 0}% CAPACITY
+                    </span>
+                    <span className="text-muted-foreground tracking-widest uppercase">Target Meta</span>
+                  </div>
                 </div>
-                <Progress
-                  value={faculty.students / faculty.target * 100}
-                  className="h-2.5 shadow-inner bg-muted" />
-                <div className="flex justify-between items-center text-[10px] font-bold">
-                  <span className="text-primary">{(faculty.students / faculty.target * 100).toFixed(0)}% CAPACITY</span>
-                  <span className="text-muted-foreground tracking-widest uppercase">Target Meta</span>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <EmptyState message="No faculty enrollment data available from the backend yet." />
+          )}
         </CardContent>
       </Card>
-      {/* Charts */}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <BarChartCard
           title="Enrollment by Faculty"
@@ -240,7 +304,7 @@ export default function CollegeAdminDashboard() {
           dataKey="rate"
           xAxisKey="year" />
       </div>
-      {/* Tabbed Content */}
+
       <Tabs defaultValue="departments" className="space-y-4">
         <TabsList>
           <TabsTrigger value="departments">Departments</TabsTrigger>
@@ -330,13 +394,15 @@ export default function CollegeAdminDashboard() {
                   </div>
                 </div>
               )}
+              {pendingApprovalsData.length === 0 && (
+                <EmptyState message="No pending approvals were returned by the backend." />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      {/* Two Column Layout */}
+
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Fee Clearance Summary */}
         <Card className="border-none shadow-premium">
           <CardHeader className="pb-4 pt-6">
             <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -345,12 +411,7 @@ export default function CollegeAdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {[
-              { label: 'Fully Cleared', value: 62, color: 'text-green-600', bg: 'bg-green-600' },
-              { label: 'Partial Payment', value: 23, color: 'text-primary', bg: 'bg-primary' },
-              { label: 'Overdue', value: 10, color: 'text-destructive', bg: 'bg-destructive' },
-              { label: 'Pending', value: 5, color: 'text-muted-foreground', bg: 'bg-muted-foreground' }
-            ].map((item) => (
+            {feeClearanceSummary.length > 0 ? feeClearanceSummary.map((item) => (
               <div key={item.label} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-tight text-muted-foreground">{item.label}</span>
@@ -358,10 +419,10 @@ export default function CollegeAdminDashboard() {
                 </div>
                 <Progress value={item.value} className="h-2 shadow-inner" />
               </div>
-            ))}
+            )) : <EmptyState message="No fee clearance summary is available yet." />}
           </CardContent>
         </Card>
-        {/* Upcoming Events */}
+
         <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
           <CardHeader className="pb-4 pt-6">
             <div className="flex items-center justify-between">
@@ -375,7 +436,7 @@ export default function CollegeAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {upcomingEvents.map((event) =>
+            {upcomingEvents.length > 0 ? upcomingEvents.map((event) =>
               <div key={event.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
                 <div className="flex items-center gap-4">
                   <div
@@ -394,11 +455,11 @@ export default function CollegeAdminDashboard() {
                 </div>
                 <Badge variant="outline" className="text-[10px] font-bold border-border/40 px-2 py-0 h-5">{event.date}</Badge>
               </div>
-            )}
+            ) : <EmptyState message="No upcoming academic events were found in the backend." />}
           </CardContent>
         </Card>
       </div>
-      {/* Quick Navigation */}
+
       <Card className="border-none shadow-premium bg-muted/30">
         <CardHeader className="pb-4 pt-6">
           <CardTitle className="text-lg font-bold">Quick Navigation</CardTitle>
@@ -444,6 +505,7 @@ export default function CollegeAdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
       <ConfirmModal
         open={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
@@ -452,5 +514,6 @@ export default function CollegeAdminDashboard() {
         confirmText={confirmConfig?.confirmText}
         onConfirm={confirmConfig?.onConfirm}
       />
-    </div>);
+    </div>
+  );
 }

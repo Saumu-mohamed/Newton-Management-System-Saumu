@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +9,13 @@ import { ClipboardList, Search, Download, FileText, CheckCircle, Clock, Printer,
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/export-utils";
 import { printTranscript } from "@/lib/print-utils";
-const transcriptRequestsData = [
-{ id: "TR001", student: "John Doe", regNo: "CS/2021/001", program: "Computer Science", type: "Official", copies: 2, status: "ready", requestDate: "2024-01-10", fee: 500 },
-{ id: "TR002", student: "Jane Smith", regNo: "ENG/2021/002", program: "Engineering", type: "Official", copies: 3, status: "processing", requestDate: "2024-01-12", fee: 750 },
-{ id: "TR003", student: "Mike Johnson", regNo: "BUS/2022/003", program: "Business Admin", type: "Unofficial", copies: 1, status: "ready", requestDate: "2024-01-08", fee: 0 },
-{ id: "TR004", student: "Sarah Wilson", regNo: "CS/2020/004", program: "Computer Science", type: "Official", copies: 1, status: "pending", requestDate: "2024-01-13", fee: 250 },
-{ id: "TR005", student: "Tom Brown", regNo: "ENG/2022/005", program: "Engineering", type: "Official", copies: 2, status: "collected", requestDate: "2024-01-05", fee: 500 }];
+import {
+  getTranscriptPreview,
+  getTranscriptRequests,
+  updateTranscriptStatus } from
+'@/services/registratorOperationsService';
+
 const transcriptColumns = [
-{ key: "id", label: "Request ID" },
 { key: "student", label: "Student Name" },
 { key: "regNo", label: "Reg Number" },
 { key: "program", label: "Program" },
@@ -25,16 +24,48 @@ const transcriptColumns = [
 { key: "fee", label: "Fee (KES)" },
 { key: "requestDate", label: "Request Date" },
 { key: "status", label: "Status" }];
+
 const TranscriptsPage = () => {
-  const [transcriptRequests] = useState(transcriptRequestsData);
+  const [transcriptRequests, setTranscriptRequests] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [type, setType] = useState("all");
+  const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const stats = [
-  { title: "Total Requests", value: "156", icon: FileText, color: "text-blue-600" },
-  { title: "Processing", value: "23", icon: Clock, color: "text-yellow-600" },
-  { title: "Ready for Collection", value: "45", icon: CheckCircle, color: "text-green-600" },
-  { title: "Collected This Month", value: "88", icon: ClipboardList, color: "text-purple-600" }];
-  const getStatusBadge = (status) => {
-    switch (status) {
+  const [actionLoading, setActionLoading] = useState("");
+
+  const loadTranscriptRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await getTranscriptRequests({
+        search,
+        status,
+        type
+      });
+      setTranscriptRequests(response.transcriptRequests || []);
+      setStats(response.stats || null);
+    } catch (error) {
+      toast.error("Load Failed", {
+        description: error?.response?.data?.message || "Failed to load transcript requests."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTranscriptRequests();
+  }, [search, status, type]);
+
+  const statCards = useMemo(() => ([
+  { title: "Total Requests", value: stats?.total ?? 0, icon: FileText, color: "text-blue-600" },
+  { title: "Processing", value: stats?.processing ?? 0, icon: Clock, color: "text-yellow-600" },
+  { title: "Ready for Collection", value: stats?.ready ?? 0, icon: CheckCircle, color: "text-green-600" },
+  { title: "Collected", value: stats?.collected ?? 0, icon: ClipboardList, color: "text-purple-600" }]), [stats]);
+
+  const getStatusBadge = (requestStatus) => {
+    switch (requestStatus) {
       case "ready":
         return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Ready</Badge>;
       case "processing":
@@ -44,49 +75,41 @@ const TranscriptsPage = () => {
       case "collected":
         return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Collected</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{requestStatus}</Badge>;
     }
   };
-  const generateMockTranscriptData = (request) => {
-    return {
-      studentName: request.student,
-      studentId: request.regNo,
-      program: request.program,
-      faculty: 'Faculty of Science & Technology',
-      dateOfAdmission: '2021-09-01',
-      status: 'In Progress',
-      cgpa: 3.45,
-      totalCredits: 84,
-      semesters: [
-      {
-        name: 'Year 1 - Semester 1',
-        gpa: 3.2,
-        courses: [
-        { code: 'CS101', name: 'Introduction to Programming', credits: 3, grade: 'A', points: 4.0 },
-        { code: 'MAT101', name: 'Calculus I', credits: 3, grade: 'B', points: 3.0 },
-        { code: 'PHY101', name: 'Physics I', credits: 3, grade: 'B+', points: 3.5 },
-        { code: 'ENG101', name: 'Communication Skills', credits: 3, grade: 'A', points: 4.0 }]
-      },
-      {
-        name: 'Year 1 - Semester 2',
-        gpa: 3.5,
-        courses: [
-        { code: 'CS102', name: 'Object-Oriented Programming', credits: 3, grade: 'A', points: 4.0 },
-        { code: 'MAT102', name: 'Calculus II', credits: 3, grade: 'B+', points: 3.5 },
-        { code: 'CS103', name: 'Data Structures', credits: 3, grade: 'A-', points: 3.7 },
-        { code: 'STA101', name: 'Statistics', credits: 3, grade: 'B', points: 3.0 }]
-      },
-      {
-        name: 'Year 2 - Semester 1',
-        gpa: 3.6,
-        courses: [
-        { code: 'CS201', name: 'Algorithms', credits: 3, grade: 'A', points: 4.0 },
-        { code: 'CS202', name: 'Database Systems', credits: 3, grade: 'A-', points: 3.7 },
-        { code: 'CS203', name: 'Computer Networks', credits: 3, grade: 'B+', points: 3.5 },
-        { code: 'CS204', name: 'Operating Systems', credits: 3, grade: 'A', points: 4.0 }]
-      }]
-    };
+
+  const handlePreview = async (request) => {
+    try {
+      setActionLoading(`${request.id}-preview`);
+      const transcriptData = await getTranscriptPreview(request.id);
+      printTranscript(transcriptData);
+    } catch (error) {
+      toast.error('Preview Failed', {
+        description: error?.response?.data?.message || 'Failed to generate transcript preview.'
+      });
+    } finally {
+      setActionLoading('');
+    }
   };
+
+  const handleStatusUpdate = async (request, nextStatus) => {
+    try {
+      setActionLoading(`${request.id}-${nextStatus}`);
+      const response = await updateTranscriptStatus(request.id, nextStatus);
+      toast.success('Transcript Updated', {
+        description: response?.message || `Transcript request updated to ${nextStatus}.`
+      });
+      await loadTranscriptRequests();
+    } catch (error) {
+      toast.error('Update Failed', {
+        description: error?.response?.data?.message || 'Failed to update transcript request.'
+      });
+    } finally {
+      setActionLoading('');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -106,15 +129,11 @@ const TranscriptsPage = () => {
             {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             Export CSV
           </Button>
-          <Button onClick={() => toast.info('New Request', { description: 'Opening transcript request form...' })}>
-            <FileText className="w-4 h-4 mr-2" />
-            New Request
-          </Button>
         </div>
       </div>
-      {/* Stats */}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {stats.map((stat) =>
+        {statCards.map((stat) =>
         <Card key={stat.title}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -128,17 +147,17 @@ const TranscriptsPage = () => {
           </Card>
         )}
       </div>
-      {/* Filters */}
+
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input placeholder="Search by student name or reg no..." className="pl-10" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by student name or reg no..." className="pl-10" />
               </div>
             </div>
-            <Select>
+            <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -150,7 +169,7 @@ const TranscriptsPage = () => {
                 <SelectItem value="collected">Collected</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select value={type} onValueChange={setType}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -163,87 +182,90 @@ const TranscriptsPage = () => {
           </div>
         </CardContent>
       </Card>
-      {/* Transcripts Table */}
+
       <Card>
         <CardHeader>
           <CardTitle>Transcript Requests</CardTitle>
           <CardDescription>All transcript requests and their status</CardDescription>
         </CardHeader>
         <CardContent>
+          {loading ?
+          <div className="py-10 text-sm text-muted-foreground">Loading transcript requests...</div> :
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Request ID</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Reg No</TableHead>
-                <TableHead>Program</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Copies</TableHead>
-                <TableHead>Fee (KES)</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transcriptRequests.map((request) =>
-              <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.id}</TableCell>
-                  <TableCell>{request.student}</TableCell>
-                  <TableCell>{request.regNo}</TableCell>
-                  <TableCell>{request.program}</TableCell>
-                  <TableCell>
-                    <Badge variant={request.type === "Official" ? "default" : "secondary"}>
-                      {request.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{request.copies}</TableCell>
-                  <TableCell>{request.fee > 0 ? request.fee : "Free"}</TableCell>
-                  <TableCell>{request.requestDate}</TableCell>
-                  <TableCell>{getStatusBadge(request.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const transcriptData = generateMockTranscriptData(request);
-                        printTranscript(transcriptData);
-                      }}
-                      title="Preview Transcript">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      {request.status === "ready" &&
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const transcriptData = generateMockTranscriptData(request);
-                        printTranscript(transcriptData);
-                        toast.success('Transcript Ready', { description: 'Print dialog opened for transcript.' });
-                      }}
-                      title="Print Transcript">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Reg No</TableHead>
+                  <TableHead>Program</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Copies</TableHead>
+                  <TableHead>Fee (KES)</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transcriptRequests.map((request) =>
+                <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.student}</TableCell>
+                    <TableCell>{request.regNo}</TableCell>
+                    <TableCell>{request.program}</TableCell>
+                    <TableCell>
+                      <Badge variant={request.type === "Official" ? "default" : "secondary"}>
+                        {request.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{request.copies}</TableCell>
+                    <TableCell>{request.fee > 0 ? request.fee : "Free"}</TableCell>
+                    <TableCell>{request.requestDate}</TableCell>
+                    <TableCell>{getStatusBadge(request.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handlePreview(request)} title="Preview Transcript">
+                          {actionLoading === `${request.id}-preview` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handlePreview(request)} title="Print Transcript">
                           <Printer className="w-4 h-4" />
                         </Button>
-                    }
-                      <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const transcriptData = generateMockTranscriptData(request);
-                        printTranscript(transcriptData);
-                      }}
-                      title="Download Transcript">
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                        <Button variant="ghost" size="sm" onClick={() => handlePreview(request)} title="Download Transcript">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        {request.status !== "ready" && request.status !== "collected" &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleStatusUpdate(request, "Ready for Collection")}
+                          disabled={actionLoading === `${request.id}-Ready for Collection`}>
+                            Mark Ready
+                          </Button>
+                        }
+                        {request.status === "ready" &&
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleStatusUpdate(request, "Collected")}
+                          disabled={actionLoading === `${request.id}-Collected`}>
+                            Collect
+                          </Button>
+                        }
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!transcriptRequests.length &&
+                <TableRow>
+                    <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-8">
+                      No transcript requests found for the selected filters.
+                    </TableCell>
+                  </TableRow>
+                }
+              </TableBody>
+            </Table>
+          }
         </CardContent>
       </Card>
     </div>);
 };
+
 export default TranscriptsPage;

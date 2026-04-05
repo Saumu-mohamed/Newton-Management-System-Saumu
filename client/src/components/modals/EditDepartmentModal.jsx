@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 const departmentSchema = z.object({
   name: z.string().min(2, 'Department name must be at least 2 characters').max(100),
   faculty: z.string().min(1, 'Please select a faculty'),
@@ -37,7 +38,6 @@ const departmentSchema = z.object({
   description: z.string().optional(),
   status: z.string().min(1, 'Please select a status')
 });
-const faculties = ['Engineering', 'Business', 'Health Sciences', 'Science', 'Arts & Humanities'];
 const statuses = ['Active', 'Inactive', 'Under Review'];
 export function EditDepartmentModal({ open, onOpenChange, department, onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -108,20 +108,9 @@ export function EditDepartmentModal({ open, onOpenChange, department, onSubmit }
               render={({ field }) =>
               <FormItem>
                   <FormLabel>Faculty *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select faculty" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {faculties.map((faculty) =>
-                    <SelectItem key={faculty} value={faculty}>
-                          {faculty}
-                        </SelectItem>
-                    )}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="Enter faculty name" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               } />

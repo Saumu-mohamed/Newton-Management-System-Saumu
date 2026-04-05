@@ -22,24 +22,45 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { reconcileBankTransactions } from '@/services/financeDashboardService';
 
-export function BankReconciliationModal({ open, onOpenChange }) {
+export function BankReconciliationModal({ open, onOpenChange, onCompleted }) {
     const [step, setStep] = useState(1);
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedBank, setSelectedBank] = useState('Equity Bank - Corporate (***4567)');
+    const [summary, setSummary] = useState({ matched: 0, partial: 0, unmatched: 0 });
+    const [items, setItems] = useState([]);
 
-    const handleUpload = () => {
+    const handleUpload = async (event) => {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
         setIsUploading(true);
-        setTimeout(() => {
+        try {
+            const response = await reconcileBankTransactions({
+                bankAccount: selectedBank,
+                fileName: file.name,
+            });
+
+            setSummary(response.summary || { matched: 0, partial: 0, unmatched: 0 });
+            setItems(response.items || []);
             setIsUploading(false);
             setStep(2);
-            toast.success('File Uploaded', { description: 'Bank statement processed successfully.' });
-        }, 2000);
+            toast.success('File Uploaded', { description: response.message || 'Bank statement processed successfully.' });
+        } catch (error) {
+            setIsUploading(false);
+            toast.error('Upload Failed', { description: error?.response?.data?.message || 'Failed to process bank statement.' });
+        }
     };
 
     const handleReconcile = () => {
-        toast.success('Reconciliation Complete', { description: '45 transactions matched automatically.' });
+        toast.success('Reconciliation Complete', { description: `${summary.matched} transactions matched automatically.` });
         onOpenChange(false);
         setStep(1);
+        onCompleted?.();
     };
 
     return (
@@ -56,7 +77,11 @@ export function BankReconciliationModal({ open, onOpenChange }) {
                     <div className="space-y-6 py-4">
                         <div className="grid w-full items-center gap-1.5">
                             <Label htmlFor="bank">Select Bank Account</Label>
-                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <select
+                                value={selectedBank}
+                                onChange={(event) => setSelectedBank(event.target.value)}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
                                 <option>Equity Bank - Corporate (***4567)</option>
                                 <option>KCB - Operational (***8901)</option>
                                 <option>Standard Chartered - Fee Collection (***2345)</option>
@@ -88,51 +113,37 @@ export function BankReconciliationModal({ open, onOpenChange }) {
                     <div className="space-y-6 py-4">
                         <div className="grid grid-cols-3 gap-4">
                             <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
-                                <p className="text-2xl font-bold text-green-600">45</p>
+                                <p className="text-2xl font-bold text-green-600">{summary.matched}</p>
                                 <p className="text-[10px] uppercase tracking-wider font-semibold text-green-600">Matched</p>
                             </div>
                             <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-center">
-                                <p className="text-2xl font-bold text-yellow-600">8</p>
+                                <p className="text-2xl font-bold text-yellow-600">{summary.partial}</p>
                                 <p className="text-[10px] uppercase tracking-wider font-semibold text-yellow-600">Partial</p>
                             </div>
                             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
-                                <p className="text-2xl font-bold text-destructive">12</p>
+                                <p className="text-2xl font-bold text-destructive">{summary.unmatched}</p>
                                 <p className="text-[10px] uppercase tracking-wider font-semibold text-destructive">Unmatched</p>
                             </div>
                         </div>
 
                         <ScrollArea className="h-[200px] w-full rounded-md border p-4">
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between text-sm py-2 border-b">
-                                    <div className="flex items-center gap-3">
-                                        <CheckCircle className="h-4 w-4 text-green-500" />
-                                        <div>
-                                            <p className="font-medium">MPE123456 - John Doe</p>
-                                            <p className="text-xs text-muted-foreground">KES 45,000 • Jan 15</p>
+                                {items.map((item) => (
+                                    <div key={item.id} className="flex items-center justify-between text-sm py-2 border-b">
+                                        <div className="flex items-center gap-3">
+                                            {item.status === 'Exact Match' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                                            {item.status === 'Date Mismatch' && <AlertTriangle className="h-4 w-4 text-yellow-500" />}
+                                            {item.status === 'No Match' && <XCircle className="h-4 w-4 text-destructive" />}
+                                            <div>
+                                                <p className="font-medium">{item.transactionRef} - {item.student}</p>
+                                                <p className="text-xs text-muted-foreground">KES {item.amount.toLocaleString()} • {item.date}</p>
+                                            </div>
                                         </div>
+                                        <Badge variant={item.status === 'No Match' ? 'destructive' : 'outline'} className={item.status === 'Date Mismatch' ? 'text-yellow-600 border-yellow-200' : ''}>
+                                            {item.status}
+                                        </Badge>
                                     </div>
-                                    <Badge variant="outline">Exact Match</Badge>
-                                </div>
-                                <div className="flex items-center justify-between text-sm py-2 border-b">
-                                    <div className="flex items-center gap-3">
-                                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                        <div>
-                                            <p className="font-medium">BNK789012 - Jane Smith</p>
-                                            <p className="text-xs text-muted-foreground">KES 35,000 • Jan 14</p>
-                                        </div>
-                                    </div>
-                                    <Badge variant="outline" className="text-yellow-600 border-yellow-200">Date Mismatch</Badge>
-                                </div>
-                                <div className="flex items-center justify-between text-sm py-2 border-b">
-                                    <div className="flex items-center gap-3">
-                                        <XCircle className="h-4 w-4 text-destructive" />
-                                        <div>
-                                            <p className="font-medium">CRD901234 - Unknown</p>
-                                            <p className="text-xs text-muted-foreground">KES 12,500 • Jan 13</p>
-                                        </div>
-                                    </div>
-                                    <Badge variant="destructive">No Match</Badge>
-                                </div>
+                                ))}
                             </div>
                         </ScrollArea>
                     </div>

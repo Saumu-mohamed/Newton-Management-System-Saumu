@@ -25,14 +25,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_LABELS } from '@/types/auth';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { useNotifications } from '@/hooks/useNotifications';
 
-
-const mockNotifications = [
-  { id: 1, title: 'New registration pending', description: 'Student John Doe needs approval', time: '5 min ago', unread: true },
-  { id: 2, title: 'Payment received', description: 'KES 45,000 from ABC Corp', time: '1 hour ago', unread: true },
-  { id: 3, title: 'Exam schedule updated', description: 'Final exams moved to next week', time: '2 hours ago', unread: false },
-  { id: 4, title: 'System maintenance', description: 'Scheduled for Sunday 2 AM', time: '5 hours ago', unread: false }
-];
 
 /**
  * Header component with search, notifications, and user menu
@@ -43,8 +37,12 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-
-  const unreadCount = mockNotifications.filter((n) => n.unread).length;
+  const {
+    notifications,
+    notificationsError,
+    loadingNotifications,
+    unreadCount,
+  } = useNotifications();
 
   const handleNotificationClick = (notification) => {
     toast.info(notification.title, {
@@ -195,7 +193,7 @@ export function Header() {
                 <DropdownMenuSeparator className="m-0" />
 
                 <div className="max-h-96 overflow-y-auto pt-1 pb-1">
-                  {mockNotifications.map((notification) => (
+                  {notifications.map((notification) => (
                     <DropdownMenuItem
                       key={notification.id}
                       className="flex flex-col items-start gap-1 px-5 py-4 cursor-pointer hover:bg-accent/30 focus:bg-accent/30 transition-colors mx-1 rounded-xl group"
@@ -218,6 +216,21 @@ export function Header() {
                     </DropdownMenuItem>
                   ))}
                 </div>
+                {loadingNotifications && notifications.length === 0 && (
+                  <div className="px-5 py-6 text-sm text-muted-foreground">
+                    Loading notifications...
+                  </div>
+                )}
+                {notificationsError && !loadingNotifications && (
+                  <div className="px-5 py-6 text-sm text-destructive">
+                    {notificationsError}
+                  </div>
+                )}
+                {!loadingNotifications && !notificationsError && notifications.length === 0 && (
+                  <div className="px-5 py-6 text-sm text-muted-foreground">
+                    No notifications available from the backend.
+                  </div>
+                )}
 
                 <DropdownMenuSeparator className="m-0" />
                 <div className="p-2">
@@ -265,7 +278,7 @@ export function Header() {
                   </SheetTitle>
                 </SheetHeader>
                 <div className="h-full overflow-y-auto">
-                  {mockNotifications.map((notification) => (
+                  {notifications.map((notification) => (
                     <button
                       key={notification.id}
                       className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b last:border-0"
@@ -290,6 +303,21 @@ export function Header() {
                     </button>
                   ))}
                 </div>
+                {loadingNotifications && notifications.length === 0 && (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    Loading notifications...
+                  </div>
+                )}
+                {notificationsError && !loadingNotifications && (
+                  <div className="p-4 text-sm text-destructive">
+                    {notificationsError}
+                  </div>
+                )}
+                {!loadingNotifications && !notificationsError && notifications.length === 0 && (
+                  <div className="p-4 text-sm text-muted-foreground">
+                    No notifications available from the backend.
+                  </div>
+                )}
                 <div className="p-4 border-t">
                   <Button
                     variant="outline"

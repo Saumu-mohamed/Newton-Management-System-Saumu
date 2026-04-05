@@ -19,6 +19,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const staffSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -27,8 +28,7 @@ const staffSchema = z.object({
   position: z.string().min(1, 'Position is required'),
   status: z.enum(['Active', 'Inactive', 'On Leave'])
 });
-const departments = ['Computer Science', 'Electrical Eng.', 'Civil Engineering', 'Finance', 'Registry', 'Administration', 'Library', 'IT'];
-const positions = ['Professor', 'Senior Lecturer', 'Lecturer', 'HOD', 'Finance Officer', 'Registrar', 'College Admin', 'Librarian', 'IT Administrator'];
+
 export function AddStaffModal({ open, onOpenChange, onAdd }) {
   const form = useForm({
     resolver: zodResolver(staffSchema),
@@ -41,18 +41,22 @@ export function AddStaffModal({ open, onOpenChange, onAdd }) {
       status: 'Active'
     }
   });
-  const onSubmit = (data) => {
-    onAdd({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      department: data.department,
-      position: data.position,
-      status: data.status
-    });
-    toast.success('Staff Added', { description: `${data.name} has been added successfully.` });
-    form.reset();
-    onOpenChange(false);
+  const onSubmit = async (data) => {
+    try {
+      await onAdd({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        department: data.department,
+        position: data.position,
+        status: data.status
+      });
+      toast.success('Staff Added', { description: `${data.name} has been added successfully.` });
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error('Create Failed', { description: error?.response?.data?.message || 'Failed to create staff member.' });
+    }
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,32 +92,14 @@ export function AddStaffModal({ open, onOpenChange, onAdd }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Department</Label>
-                <Select onValueChange={(value) => form.setValue('department', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) =>
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input {...form.register('department')} placeholder="Enter department" />
                 {form.formState.errors.department &&
                 <p className="text-xs text-destructive">{form.formState.errors.department.message}</p>
                 }
               </div>
               <div className="grid gap-2">
                 <Label>Position</Label>
-                <Select onValueChange={(value) => form.setValue('position', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positions.map((pos) =>
-                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input {...form.register('position')} placeholder="Enter position" />
                 {form.formState.errors.position &&
                 <p className="text-xs text-destructive">{form.formState.errors.position.message}</p>
                 }

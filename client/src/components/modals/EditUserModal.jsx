@@ -38,10 +38,10 @@ const userSchema = z.object({
   phone: z.string().optional(),
   status: z.string().min(1, 'Please select a status')
 });
-const roles = ['Student', 'Lecturer', 'Staff', 'Finance Officer', 'Registrar', 'College Admin'];
+const roles = ['Student', 'Lecturer', 'Finance Officer', 'Registrar', 'College Admin'];
 const campuses = ['Main', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret'];
 const departments = ['Computer Science', 'Engineering', 'Business', 'Medicine', 'Mathematics', 'Administration'];
-const statuses = ['Active', 'Inactive', 'Suspended'];
+const statuses = ['Active', 'Suspended'];
 export function EditUserModal({ open, onOpenChange, user, onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm({
@@ -76,12 +76,11 @@ export function EditUserModal({ open, onOpenChange, user, onSubmit }) {
       if (onSubmit) {
         await onSubmit({ ...data, id: user.id });
       }
-      toast.success('User Updated', {
-        description: `${data.name} has been updated successfully`
-      });
       onOpenChange(false);
     } catch (error) {
-      toast.error('Error', { description: 'Failed to update user' });
+      toast.error('Update Failed', {
+        description: error?.response?.data?.message || 'Failed to update user.'
+      });
     } finally {
       setIsSubmitting(false);
     }

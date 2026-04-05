@@ -1,24 +1,59 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wallet, Plus, Edit, Trash2, BookOpen, GraduationCap, Building2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Wallet, BookOpen, GraduationCap, Building2 } from "lucide-react";
+import { toast } from "sonner";
+import { getFeeStructures } from "@/services/financeDashboardService";
+
 const FeeStructurePage = () => {
-  const feeStructures = [
-  { id: 1, program: "Computer Science", level: "Undergraduate", year: 1, tuition: 120000, library: 5000, exam: 8000, activity: 3000, total: 136000, status: "active" },
-  { id: 2, program: "Computer Science", level: "Undergraduate", year: 2, tuition: 125000, library: 5000, exam: 8000, activity: 3000, total: 141000, status: "active" },
-  { id: 3, program: "Engineering", level: "Undergraduate", year: 1, tuition: 150000, library: 6000, exam: 10000, activity: 4000, total: 170000, status: "active" },
-  { id: 4, program: "Business Admin", level: "Undergraduate", year: 1, tuition: 100000, library: 4000, exam: 7000, activity: 3000, total: 114000, status: "active" },
-  { id: 5, program: "MBA", level: "Postgraduate", year: 1, tuition: 250000, library: 8000, exam: 15000, activity: 5000, total: 278000, status: "active" },
-  { id: 6, program: "MSc Computer Science", level: "Postgraduate", year: 1, tuition: 200000, library: 7000, exam: 12000, activity: 4000, total: 223000, status: "draft" }];
-  const stats = [
-  { title: "Active Fee Structures", value: "24", icon: Wallet, color: "text-green-600" },
-  { title: "Programs Covered", value: "12", icon: BookOpen, color: "text-blue-600" },
-  { title: "Avg. Annual Fee", value: "KES 165K", icon: GraduationCap, color: "text-purple-600" },
-  { title: "Campuses", value: "3", icon: Building2, color: "text-orange-600" }];
+  const [feeStructures, setFeeStructures] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [level, setLevel] = useState("all");
+  const [status, setStatus] = useState("all");
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadFeeStructures = async () => {
+      try {
+        setLoading(true);
+        const data = await getFeeStructures({ search, level, status });
+        if (!ignore) {
+          setFeeStructures(data.feeStructures || []);
+          setStats(data.stats || null);
+          setError("");
+        }
+      } catch (fetchError) {
+        if (!ignore) {
+          setError(fetchError?.response?.data?.message || "Failed to load fee structures.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadFeeStructures();
+
+    return () => {
+      ignore = true;
+    };
+  }, [search, level, status]);
+
+  const statCards = [
+    { title: "Active Fee Structures", value: String(stats?.activeStructures || 0), icon: Wallet, color: "text-green-600" },
+    { title: "Programs Covered", value: String(stats?.programsCovered || 0), icon: BookOpen, color: "text-blue-600" },
+    { title: "Avg. Annual Fee", value: `KES ${(stats?.avgAnnualFee || 0).toLocaleString()}`, icon: GraduationCap, color: "text-purple-600" },
+    { title: "Campuses", value: String(stats?.campuses || 0), icon: Building2, color: "text-orange-600" }
+  ];
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -26,15 +61,12 @@ const FeeStructurePage = () => {
           <h1 className="text-3xl font-bold text-foreground">Fee Structure</h1>
           <p className="text-muted-foreground">Manage program fee structures and charges</p>
         </div>
-        <Button onClick={() => toast({ title: "Create Fee Structure", description: "Opening fee structure form..." })}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Fee Structure
-        </Button>
       </div>
+      {error && <div className="text-sm text-destructive">{error}</div>}
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {stats.map((stat) =>
-        <Card key={stat.title}>
+        {statCards.map((stat) =>
+          <Card key={stat.title}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -52,9 +84,9 @@ const FeeStructurePage = () => {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
-              <Input placeholder="Search by program name..." />
+              <Input placeholder="Search by program name..." value={search} onChange={(event) => setSearch(event.target.value)} />
             </div>
-            <Select>
+            <Select value={level} onValueChange={setLevel}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
@@ -65,8 +97,8 @@ const FeeStructurePage = () => {
                 <SelectItem value="diploma">Diploma</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
-              <SelectTrigger className="w-[150px]">
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-37.5">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -98,12 +130,16 @@ const FeeStructurePage = () => {
                 <TableHead className="text-right">Activity</TableHead>
                 <TableHead className="text-right">Total (KES)</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
+              {loading && (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center text-muted-foreground">Loading fee structures...</TableCell>
+                </TableRow>
+              )}
               {feeStructures.map((fee) =>
-              <TableRow key={fee.id}>
+                <TableRow key={fee.id}>
                   <TableCell className="font-medium">{fee.program}</TableCell>
                   <TableCell>{fee.level}</TableCell>
                   <TableCell>Year {fee.year}</TableCell>
@@ -117,16 +153,11 @@ const FeeStructurePage = () => {
                       {fee.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => toast({ title: "Edit Fee Structure", description: `Editing ${fee.program} Year ${fee.year}...` })}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => toast({ title: "Delete", description: "Are you sure you want to delete this fee structure?" })}>
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                </TableRow>
+              )}
+              {!loading && feeStructures.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center text-muted-foreground">No fee structures returned by the backend.</TableCell>
                 </TableRow>
               )}
             </TableBody>

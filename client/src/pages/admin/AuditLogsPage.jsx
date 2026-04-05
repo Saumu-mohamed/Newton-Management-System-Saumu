@@ -24,18 +24,9 @@ import {
   SelectTrigger,
   SelectValue } from
 '@/components/ui/select';
-import { useState } from 'react';
-const auditLogs = [
-{ id: 1, action: 'Login', user: 'admin@cms.edu', role: 'Super Admin', ip: '192.168.1.45', time: '2024-01-15 10:23:45', status: 'success', details: 'Successful login from Nairobi' },
-{ id: 2, action: 'Password Reset', user: 'student@cms.edu', role: 'Student', ip: '192.168.1.102', time: '2024-01-15 10:15:30', status: 'success', details: 'Password changed via email verification' },
-{ id: 3, action: 'Failed Login', user: 'unknown@test.com', role: 'Unknown', ip: '45.23.112.8', time: '2024-01-15 09:45:12', status: 'failed', details: 'Invalid credentials - 3rd attempt' },
-{ id: 4, action: 'Role Change', user: 'lecturer@cms.edu', role: 'Lecturer', ip: '192.168.1.78', time: '2024-01-15 09:30:00', status: 'success', details: 'Role upgraded to Senior Lecturer' },
-{ id: 5, action: 'Account Blocked', user: 'suspicious@mail.com', role: 'Unknown', ip: '89.45.223.1', time: '2024-01-15 08:15:22', status: 'warning', details: 'Multiple failed login attempts' },
-{ id: 6, action: 'Payment', user: 'finance@cms.edu', role: 'Finance Officer', ip: '192.168.1.56', time: '2024-01-15 08:00:00', status: 'success', details: 'Bulk payment reconciliation completed' },
-{ id: 7, action: 'User Created', user: 'registrar@cms.edu', role: 'Registrar', ip: '192.168.1.34', time: '2024-01-14 16:45:00', status: 'success', details: 'New student account created' },
-{ id: 8, action: 'Logout', user: 'college@cms.edu', role: 'College Admin', ip: '192.168.1.89', time: '2024-01-14 16:30:00', status: 'success', details: 'Session ended normally' },
-{ id: 9, action: 'Data Export', user: 'admin@cms.edu', role: 'Super Admin', ip: '192.168.1.45', time: '2024-01-14 15:00:00', status: 'success', details: 'Exported student records to Excel' },
-{ id: 10, action: 'Settings Change', user: 'admin@cms.edu', role: 'Super Admin', ip: '192.168.1.45', time: '2024-01-14 14:30:00', status: 'success', details: 'Updated fee structure settings' }];
+import { useEffect, useState } from 'react';
+import { exportToCSV } from '@/lib/export-utils';
+import { getAuditLogs } from '@/services/adminUtilityService';
 const getActionIcon = (action) => {
   switch (action) {
     case 'Login':return <LogIn className="h-3 w-3" />;
@@ -74,9 +65,30 @@ const logColumns = [
 },
 { key: 'details', label: 'Details' }];
 export default function AuditLogsPage() {
+  const [logs, setLogs] = useState([]);
+  const [stats, setStats] = useState({ total: 0, success: 0, failed: 0, warning: 0 });
+  const [loading, setLoading] = useState(true);
   const [actionFilter, setActionFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const filteredLogs = auditLogs.filter((log) => {
+
+  useEffect(() => {
+    const loadLogs = async () => {
+      try {
+        setLoading(true);
+        const data = await getAuditLogs();
+        setLogs(data.logs || []);
+        setStats(data.stats || { total: 0, success: 0, failed: 0, warning: 0 });
+      } catch (error) {
+        toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load audit logs.' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLogs();
+  }, []);
+
+  const filteredLogs = logs.filter((log) => {
     if (actionFilter !== 'all' && log.action !== actionFilter) return false;
     if (statusFilter !== 'all' && log.status !== statusFilter) return false;
     return true;
@@ -88,7 +100,7 @@ export default function AuditLogsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
           <p className="text-muted-foreground">Track all system activities and security events</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => toast.success('Export Started', { description: 'Exporting audit logs...' })}>
+        <Button variant="outline" size="sm" onClick={() => exportToCSV({ data: filteredLogs, filename: 'audit-logs' })}>
           <Download className="h-4 w-4 mr-2" />
           Export Logs
         </Button>
@@ -102,7 +114,7 @@ export default function AuditLogsPage() {
                 <ClipboardList className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{auditLogs.length}</p>
+                <p className="text-2xl font-bold">{stats.total}</p>
                 <p className="text-xs text-muted-foreground">Total Logs</p>
               </div>
             </div>
@@ -115,7 +127,7 @@ export default function AuditLogsPage() {
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{auditLogs.filter((l) => l.status === 'success').length}</p>
+                <p className="text-2xl font-bold">{stats.success}</p>
                 <p className="text-xs text-muted-foreground">Successful</p>
               </div>
             </div>
@@ -128,7 +140,7 @@ export default function AuditLogsPage() {
                 <XCircle className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{auditLogs.filter((l) => l.status === 'failed').length}</p>
+                <p className="text-2xl font-bold">{stats.failed}</p>
                 <p className="text-xs text-muted-foreground">Failed</p>
               </div>
             </div>
@@ -141,7 +153,7 @@ export default function AuditLogsPage() {
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{auditLogs.filter((l) => l.status === 'warning').length}</p>
+                <p className="text-2xl font-bold">{stats.warning}</p>
                 <p className="text-xs text-muted-foreground">Warnings</p>
               </div>
             </div>
@@ -192,12 +204,15 @@ export default function AuditLogsPage() {
           <CardTitle className="text-base font-medium">Activity Logs</CardTitle>
         </CardHeader>
         <CardContent>
+          {loading ?
+          <div className="py-8 text-sm text-muted-foreground">Loading audit logs...</div> :
           <DataTable
             columns={logColumns}
             data={filteredLogs}
             searchPlaceholder="Search logs..."
             pageSize={10}
             exportable />
+          }
         </CardContent>
       </Card>
     </div>);

@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 const courseSchema = z.object({
   code: z.string().min(2, 'Course code is required').max(20),
   name: z.string().min(3, 'Course name must be at least 3 characters').max(100),
@@ -39,9 +40,9 @@ const courseSchema = z.object({
   semester: z.string().min(1, 'Please select a semester'),
   description: z.string().optional()
 });
-const departments = ['Computer Science', 'Electrical Eng.', 'Civil Engineering', 'Business', 'Medicine', 'Mathematics', 'General Studies'];
-const lecturers = ['Dr. J. Kiprop', 'Prof. M. Ochieng', 'Dr. P. Wanjiku', 'Prof. S. Wanjiku', 'Dr. G. Muthoni', 'Prof. M. Njeri', 'Prof. D. Mwangi'];
+
 const semesters = ['Sem 1', 'Sem 2', 'Sem 3'];
+
 export function AddCourseModal({ open, onOpenChange, onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm({
@@ -129,20 +130,9 @@ export function AddCourseModal({ open, onOpenChange, onSubmit }) {
                 render={({ field }) =>
                 <FormItem>
                     <FormLabel>Department *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {departments.map((dept) =>
-                      <SelectItem key={dept} value={dept}>
-                            {dept}
-                          </SelectItem>
-                      )}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Enter department name" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 } />
@@ -170,26 +160,15 @@ export function AddCourseModal({ open, onOpenChange, onSubmit }) {
                   </FormItem>
                 } />
             </div>
-            <FormField
+              <FormField
               control={form.control}
               name="lecturer"
               render={({ field }) =>
               <FormItem>
                   <FormLabel>Assigned Lecturer *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select lecturer" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {lecturers.map((lect) =>
-                    <SelectItem key={lect} value={lect}>
-                          {lect}
-                        </SelectItem>
-                    )}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Input placeholder="Enter lecturer name" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               } />

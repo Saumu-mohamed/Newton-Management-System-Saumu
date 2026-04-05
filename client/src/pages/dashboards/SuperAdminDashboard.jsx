@@ -1,91 +1,104 @@
-import { StatsCard } from '@/components/dashboard/StatsCard';
-import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
-import { AreaChartCard, BarChartCard, PieChartCard } from '@/components/dashboard/Charts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { exportToCSV, exportToPDF } from '@/lib/export-utils';
+import { AreaChartCard, BarChartCard, PieChartCard } from '@/components/dashboard/Charts';
+import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
+import { StatsCard } from '@/components/dashboard/StatsCard';
+import { ConfirmModal } from '@/components/modals';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Users,
-  GraduationCap,
+  Activity,
+  AlertTriangle,
+  Bell,
   Building2,
+  CheckCircle,
+  Clock,
+  Download,
+  Eye,
+  GraduationCap,
+  Key,
+  Lock,
+  RefreshCw,
+  Server,
+  Shield,
   TrendingUp,
+  Unlock,
   UserCheck,
   UserX,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Shield,
-  AlertTriangle,
-  Activity,
-  Server,
+  Users,
   Wifi,
-  RefreshCw,
-  Download,
-  Bell,
-  Lock,
-  Unlock,
-  Key,
-  Eye
-} from
-  'lucide-react';
-import { useState } from 'react';
-import { ConfirmModal } from '@/components/modals';
-// Mock data for system-wide monitoring
-const enrollmentData = [
-  { month: 'Jan', students: 1200, lecturers: 45 },
-  { month: 'Feb', students: 1350, lecturers: 48 },
-  { month: 'Mar', students: 1450, lecturers: 52 },
-  { month: 'Apr', students: 1380, lecturers: 50 },
-  { month: 'May', students: 1520, lecturers: 55 },
-  { month: 'Jun', students: 1680, lecturers: 58 }];
-const campusComparison = [
-  { campus: 'Main Campus', enrolled: 3200, collected: 45000000, outstanding: 8200000, staff: 185 },
-  { campus: 'Mombasa', enrolled: 1800, collected: 28000000, outstanding: 5100000, staff: 98 },
-  { campus: 'Kisumu', enrolled: 1200, collected: 19000000, outstanding: 3800000, staff: 72 },
-  { campus: 'Nakuru', enrolled: 980, collected: 15000000, outstanding: 2900000, staff: 58 }];
-const userDistribution = [
-  { name: 'Students', value: 8500 },
-  { name: 'Lecturers', value: 450 },
-  { name: 'Staff', value: 280 },
-  { name: 'Admins', value: 45 }];
-const accountStatus = [
-  { name: 'Active', value: 8420 },
-  { name: 'Inactive', value: 650 },
-  { name: 'Suspended', value: 85 },
-  { name: 'Pending', value: 120 }];
-const pendingApprovals = [
-  { id: 1, name: 'Faith Achieng', type: 'Student Registration', campus: 'Main', date: '2024-01-15', priority: 'High' },
-  { id: 2, name: 'Dr. Peter Omondi', type: 'Lecturer Onboarding', campus: 'Mombasa', date: '2024-01-14', priority: 'Medium' },
-  { id: 3, name: 'Grace Wanjiru', type: 'Fee Waiver Request', campus: 'Main', date: '2024-01-14', priority: 'High' },
-  { id: 4, name: 'John Kiprop', type: 'Transfer Request', campus: 'Kisumu', date: '2024-01-13', priority: 'Low' },
-  { id: 5, name: 'Mary Njeri', type: 'Document Verification', campus: 'Nakuru', date: '2024-01-12', priority: 'Medium' }];
-const recentAuditLogs = [
-  { id: 1, action: 'User Login', user: 'admin@cms.edu', ip: '192.168.1.45', time: '2 min ago', status: 'success', details: 'Super Admin access granted' },
-  { id: 2, action: 'Password Reset', user: 'student@cms.edu', ip: '192.168.1.102', time: '15 min ago', status: 'success', details: 'Password changed successfully' },
-  { id: 3, action: 'Failed Login', user: 'unknown@test.com', ip: '45.23.112.8', time: '1 hour ago', status: 'failed', details: 'Invalid credentials - 3rd attempt' },
-  { id: 4, action: 'Role Changed', user: 'lecturer@cms.edu', ip: '192.168.1.78', time: '2 hours ago', status: 'success', details: 'Role upgraded to Senior Lecturer' },
-  { id: 5, action: 'Account Blocked', user: 'suspicious@mail.com', ip: '89.45.223.1', time: '3 hours ago', status: 'warning', details: 'Multiple failed attempts detected' },
-  { id: 6, action: 'Payment Processed', user: 'finance@cms.edu', ip: '192.168.1.56', time: '4 hours ago', status: 'success', details: 'Bulk payment reconciliation' }];
-const systemAlerts = [
-  { id: 1, type: 'error', title: 'Failed M-Pesa Callback', message: '3 payment confirmations pending', time: '5 min ago' },
-  { id: 2, type: 'warning', title: 'High Server Load', message: 'CPU usage at 85%', time: '15 min ago' },
-  { id: 3, type: 'info', title: 'Scheduled Maintenance', message: 'Database backup at 2:00 AM', time: '1 hour ago' },
-  { id: 4, type: 'error', title: 'Blocked Account Alert', message: '5 accounts blocked today', time: '2 hours ago' }];
-const allUsers = [
-  { id: 1, name: 'James Ochieng', email: 'james.ochieng@cms.edu', role: 'Student', campus: 'Main', status: 'Active', lastLogin: '2 hours ago' },
-  { id: 2, name: 'Dr. Susan Wanjiku', email: 'susan.wanjiku@cms.edu', role: 'Lecturer', campus: 'Mombasa', status: 'Active', lastLogin: '1 day ago' },
-  { id: 3, name: 'Peter Kamau', email: 'peter.kamau@cms.edu', role: 'Finance Officer', campus: 'Main', status: 'Active', lastLogin: '5 hours ago' },
-  { id: 4, name: 'Grace Njeri', email: 'grace.njeri@cms.edu', role: 'Registrar', campus: 'Kisumu', status: 'Inactive', lastLogin: '1 week ago' },
-  { id: 5, name: 'David Mwangi', email: 'david.mwangi@cms.edu', role: 'Student', campus: 'Nakuru', status: 'Suspended', lastLogin: '2 weeks ago' }];
+  XCircle
+} from 'lucide-react';
+import {
+  acknowledgeSuperAdminAlert,
+  getSuperAdminDashboard,
+  resetSuperAdminPassword,
+  updateSuperAdminApproval,
+  updateSuperAdminUserStatus
+} from '@/services/superAdminDashboardService';
+
+function EmptyState({ message }) {
+  return (
+    <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+      {message}
+    </div>
+  );
+}
+
+const formatCurrencyShort = (value) => {
+  if (!value) {
+    return 'KES 0';
+  }
+
+  return value >= 1000000
+    ? `KES ${(value / 1000000).toFixed(1)}M`
+    : `KES ${value.toLocaleString()}`;
+};
+
+const humanizeRole = (role) => String(role || '')
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, (char) => char.toUpperCase());
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const data = await getSuperAdminDashboard();
+      setDashboardData(data);
+      setError('');
+    } catch (fetchError) {
+      console.error('Failed to load super admin dashboard:', fetchError);
+      setError(fetchError?.response?.data?.message || 'Failed to load dashboard data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const overview = dashboardData?.overview || {};
+  const kpis = dashboardData?.kpis || {};
+  const systemStatusCards = dashboardData?.systemStatusCards || {};
+  const enrollmentData = dashboardData?.enrollmentData || [];
+  const campusComparison = dashboardData?.campusComparison || [];
+  const userDistribution = dashboardData?.userDistribution || [];
+  const accountStatus = dashboardData?.accountStatus || [];
+  const pendingApprovals = dashboardData?.pendingApprovals || [];
+  const recentAuditLogs = dashboardData?.recentAuditLogs || [];
+  const systemAlerts = dashboardData?.systemAlerts || [];
+  const allUsers = dashboardData?.allUsers || [];
 
   const handleAction = (row, isApprove) => {
     setConfirmConfig({
@@ -93,13 +106,58 @@ export default function SuperAdminDashboard() {
       description: `Are you sure you want to ${isApprove ? 'approve' : 'reject'} the ${row.type} request from ${row.name}?`,
       confirmText: isApprove ? 'Approve' : 'Reject',
       variant: isApprove ? 'default' : 'destructive',
-      onConfirm: () => {
-        toast.success(isApprove ? 'Approved' : 'Rejected', {
-          description: `${row.name}'s ${row.type} has been ${isApprove ? 'approved' : 'rejected'}`
+      onConfirm: async () => {
+        const result = await updateSuperAdminApproval(row.id, isApprove ? 'approved' : 'rejected');
+        await fetchDashboard();
+        toast.success(isApprove ? 'Request Approved' : 'Request Rejected', {
+          description: result.message
         });
       }
     });
     setIsConfirmOpen(true);
+  };
+
+  const handleResetPassword = async (row) => {
+    try {
+      const result = await resetSuperAdminPassword(row.id);
+      toast.success('Password Reset Complete', {
+        description: `${row.email} temporary password: ${result.temporaryPassword}`
+      });
+      await fetchDashboard();
+    } catch (actionError) {
+      toast.error('Password Reset Failed', {
+        description: actionError?.response?.data?.message || 'Failed to reset password.'
+      });
+    }
+  };
+
+  const handleToggleUserStatus = async (row) => {
+    try {
+      const shouldActivate = row.status !== 'Active';
+      const result = await updateSuperAdminUserStatus(row.id, shouldActivate);
+      toast.success(shouldActivate ? 'Account Unblocked' : 'Account Blocked', {
+        description: result.message
+      });
+      await fetchDashboard();
+    } catch (actionError) {
+      toast.error('Status Update Failed', {
+        description: actionError?.response?.data?.message || 'Failed to update user status.'
+      });
+    }
+  };
+
+  const handleAcknowledgeAlert = async (alert) => {
+    try {
+      const result = await acknowledgeSuperAdminAlert(alert.id);
+      toast.success('Alert Acknowledged', {
+        description: result.message
+      });
+      await fetchDashboard();
+    } catch (actionError) {
+      toast.error('Acknowledge Failed', {
+        description: actionError?.response?.data?.message || 'Failed to acknowledge alert.'
+      });
+    }
   };
 
   const approvalColumns = [
@@ -129,7 +187,8 @@ export default function SuperAdminDashboard() {
             Reject
           </Button>
         </div>
-    }];
+    }
+  ];
 
   const campusColumns = [
     { key: 'campus', label: 'Campus', sortable: true },
@@ -138,28 +197,33 @@ export default function SuperAdminDashboard() {
     {
       key: 'collected',
       label: 'Collected',
-      render: (value) => `KES ${(value / 1000000).toFixed(1)}M`,
+      render: (value) => formatCurrencyShort(value),
       sortable: true
     },
     {
       key: 'outstanding',
       label: 'Outstanding',
       render: (value) =>
-        <span className="text-destructive font-medium">KES {(value / 1000000).toFixed(1)}M</span>,
+        <span className="text-destructive font-medium">{formatCurrencyShort(value)}</span>,
       sortable: true
-    }];
+    }
+  ];
 
   const userColumns = [
     { key: 'name', label: 'Name', sortable: true },
     { key: 'email', label: 'Email' },
-    { key: 'role', label: 'Role' },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (value) => humanizeRole(value)
+    },
     { key: 'campus', label: 'Campus' },
     {
       key: 'status',
       label: 'Status',
       render: (value) => <StatusBadge status={value} />
     },
-    { key: 'lastLogin', label: 'Last Login' },
+    { key: 'lastLogin', label: 'Last Activity' },
     {
       key: 'actions',
       label: 'Actions',
@@ -168,48 +232,52 @@ export default function SuperAdminDashboard() {
           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => navigate('/profile')}>
             <Eye className="h-3 w-3" />
           </Button>
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toast.info('Reset Password', { description: `Password reset email sent to ${row.email}` })}>
+          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleResetPassword(row)}>
             <Key className="h-3 w-3" />
           </Button>
           {row.status === 'Active' ?
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => toast.warning('Account Blocked', { description: `${row.name}'s account has been blocked` })}>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => handleToggleUserStatus(row)}>
               <Lock className="h-3 w-3" />
             </Button> :
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600" onClick={() => toast.success('Account Unblocked', { description: `${row.name}'s account has been unblocked` })}>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600" onClick={() => handleToggleUserStatus(row)}>
               <Unlock className="h-3 w-3" />
             </Button>
           }
         </div>
-    }];
+    }
+  ];
+
   const handleExportReport = () => {
     exportToPDF({
       data: [
-        { metric: 'Total Users', value: '9,275', status: 'Active' },
-        { metric: 'Active Students', value: '8,420', status: 'Active' },
-        { metric: 'Campuses', value: '4', status: 'Operational' },
-        { metric: 'Fee Collection', value: 'KES 107M', status: '+18%' }],
+        { metric: 'Total Identities', value: kpis.totalIdentities || 0, status: overview.systemStatus || 'Operational' },
+        { metric: 'Academic Population', value: kpis.academicPopulation || 0, status: `${kpis.readyForGraduation || 0} ready for grad` },
+        { metric: 'Campuses', value: kpis.campusCount || 0, status: 'Live backend data' },
+        { metric: 'Institutional Revenue', value: formatCurrencyShort(kpis.institutionalRevenue || 0), status: `${pendingApprovals.length} actions pending` }
+      ],
       filename: 'system-report',
       title: 'System Report',
       columns: [
         { key: 'metric', label: 'Metric' },
         { key: 'value', label: 'Value' },
-        { key: 'status', label: 'Status' }]
+        { key: 'status', label: 'Status' }
+      ]
     });
   };
+
   return (
     <div className="space-y-8 w-full animate-in fade-in duration-700">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-2">
         <div>
-          <h1 className="h1-page mb-1">Super Admin Dashboard</h1>
+          <h1 className="h1-page mb-1">{overview.title || 'Super Admin Dashboard'}</h1>
           <p className="body-md text-muted-foreground flex items-center gap-2">
-            System-Wide Monitoring & Governance
+            {overview.subtitle || 'System-Wide Monitoring & Governance'}
             <span className="w-1 h-1 rounded-full bg-border" />
-            Global Instance Status: <span className="text-green-600 font-bold uppercase tracking-tighter">Operational</span>
+            Global Instance Status: <span className="text-green-600 font-bold uppercase tracking-tighter">{overview.systemStatus || 'Operational'}</span>
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={() => window.location.reload()}>
+          <Button variant="outline" className="rounded-xl border-border/40 hover:bg-muted/50" onClick={fetchDashboard}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Sync Status
           </Button>
@@ -219,7 +287,23 @@ export default function SuperAdminDashboard() {
           </Button>
         </div>
       </div>
-      {/* Real-Time System Status */}
+
+      {loading && (
+        <Card className="border-none shadow-premium">
+          <CardContent className="flex items-center justify-center py-16 text-sm text-muted-foreground">
+            Loading super admin dashboard...
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="border-destructive/30 bg-destructive/5 shadow-none">
+          <CardContent className="py-4 text-sm text-destructive">
+            {error}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card className="border-none shadow-sm bg-green-500/5 ring-1 ring-green-500/20">
           <CardContent className="p-4 flex items-center gap-4">
@@ -228,7 +312,7 @@ export default function SuperAdminDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-black text-green-600/70 uppercase tracking-widest">Core Engine</p>
-              <p className="text-sm font-black text-green-600 tracking-tight">ONLINE</p>
+              <p className="text-sm font-black text-green-600 tracking-tight">{systemStatusCards.coreEngine || 'ONLINE'}</p>
             </div>
           </CardContent>
         </Card>
@@ -239,7 +323,7 @@ export default function SuperAdminDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest">Active Pulse</p>
-              <p className="text-sm font-black text-primary tracking-tight">1,245 USERS</p>
+              <p className="text-sm font-black text-primary tracking-tight">{systemStatusCards.activePulse || '0 USERS'}</p>
             </div>
           </CardContent>
         </Card>
@@ -250,7 +334,7 @@ export default function SuperAdminDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-black text-yellow-600/70 uppercase tracking-widest">Compute Load</p>
-              <p className="text-sm font-black text-yellow-700 tracking-tight">65% AVG</p>
+              <p className="text-sm font-black text-yellow-700 tracking-tight">{systemStatusCards.computeLoad || '0 QUEUED'}</p>
             </div>
           </CardContent>
         </Card>
@@ -261,66 +345,66 @@ export default function SuperAdminDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-black text-destructive/70 uppercase tracking-widest">Sec. Alerts</p>
-              <p className="text-sm font-black text-destructive tracking-tight">{systemAlerts.length} URGENT</p>
+              <p className="text-sm font-black text-destructive tracking-tight">{systemStatusCards.securityAlerts || '0 URGENT'}</p>
             </div>
           </CardContent>
         </Card>
       </div>
-      {/* KPI Cards */}
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Identities"
-          value="9,275"
-          change="+12% YoY growth"
+          value={(kpis.totalIdentities || 0).toLocaleString()}
+          change="Live system total"
           changeType="positive"
           icon={Users} />
         <StatsCard
           title="Academic Population"
-          value="8,420"
-          change="892 ready for grad"
+          value={(kpis.academicPopulation || 0).toLocaleString()}
+          change={`${(kpis.readyForGraduation || 0).toLocaleString()} ready for grad`}
           changeType="positive"
           icon={GraduationCap} />
         <StatsCard
           title="Instance Clusters"
-          value="4"
-          change="All Nodes Healthy"
+          value={(kpis.campusCount || 0).toLocaleString()}
+          change="All nodes reporting"
           changeType="neutral"
           icon={Building2} />
         <StatsCard
           title="Action Pipeline"
-          value="23"
-          change="4 urgent overrides"
+          value={(kpis.actionPipeline || 0).toLocaleString()}
+          change={`${(kpis.urgentActionCount || 0).toLocaleString()} urgent overrides`}
           changeType="negative"
           icon={Clock} />
       </div>
-      {/* Secondary KPIs */}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Active Accounts"
-          value="8,420"
-          change="90.8% Reach"
+          value={(kpis.activeAccounts || 0).toLocaleString()}
+          change="User identities marked active"
           changeType="positive"
           icon={UserCheck} />
         <StatsCard
           title="Dormant"
-          value="650"
-          change="> 30 days"
+          value={(kpis.dormantAccounts || 0).toLocaleString()}
+          change="First login still pending"
           changeType="neutral"
           icon={UserX} />
         <StatsCard
           title="Suspended"
-          value="85"
-          change="Policy violations"
+          value={(kpis.suspendedAccounts || 0).toLocaleString()}
+          change="Inactive user accounts"
           changeType="negative"
           icon={Shield} />
         <StatsCard
           title="Institutional Revenue"
-          value="KES 107M"
-          change="+18% variance"
+          value={formatCurrencyShort(kpis.institutionalRevenue || 0)}
+          change={`${formatCurrencyShort(kpis.totalOutstanding || 0)} outstanding`}
           changeType="positive"
           icon={TrendingUp} />
       </div>
-      {/* Charts Row */}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <AreaChartCard
           title="Campus Enrollment"
@@ -330,7 +414,7 @@ export default function SuperAdminDashboard() {
         <PieChartCard title="Role Distribution" data={userDistribution} />
         <PieChartCard title="Security Status" data={accountStatus} />
       </div>
-      {/* Tabbed Content */}
+
       <Tabs defaultValue="approvals" className="space-y-4">
         <TabsList>
           <TabsTrigger value="approvals">Pending Approvals</TabsTrigger>
@@ -367,9 +451,7 @@ export default function SuperAdminDashboard() {
                   <p className="text-xs text-muted-foreground mt-0.5">Control access and roles across the entire institution</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="rounded-xl h-9 font-bold text-xs" onClick={() => {
-                    exportToCSV({ data: allUsers, filename: 'users-list' });
-                  }}>EXPORT LIST</Button>
+                  <Button variant="outline" className="rounded-xl h-9 font-bold text-xs" onClick={() => exportToCSV({ data: allUsers, filename: 'users-list' })}>EXPORT LIST</Button>
                   <Button className="rounded-xl h-9 font-bold text-xs shadow-lg shadow-primary/20" onClick={() => navigate('/users')}>CREATE ACCOUNT</Button>
                 </div>
               </div>
@@ -396,18 +478,24 @@ export default function SuperAdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <DataTable
-                columns={campusColumns}
-                data={campusComparison}
-                searchable={false}
-                pageSize={4} />
-              <div className="mt-8 pt-6 border-t border-border/40">
-                <BarChartCard
-                  title="Branch Enrollment Matrix"
-                  data={campusComparison}
-                  dataKeys={['enrolled']}
-                  xAxisKey="campus" />
-              </div>
+              {campusComparison.length > 0 ? (
+                <>
+                  <DataTable
+                    columns={campusColumns}
+                    data={campusComparison}
+                    searchable={false}
+                    pageSize={4} />
+                  <div className="mt-8 pt-6 border-t border-border/40">
+                    <BarChartCard
+                      title="Branch Enrollment Matrix"
+                      data={campusComparison}
+                      dataKeys={['enrolled']}
+                      xAxisKey="campus" />
+                  </div>
+                </>
+              ) : (
+                <EmptyState message="No campus comparison data is available from the backend yet." />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -429,7 +517,7 @@ export default function SuperAdminDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {systemAlerts.map((alert) =>
+              {systemAlerts.length > 0 ? systemAlerts.map((alert) =>
                 <div
                   key={alert.id}
                   className={`flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 hover:shadow-md ${alert.type === 'error' ? 'bg-destructive/5 border-destructive/10' :
@@ -449,51 +537,56 @@ export default function SuperAdminDashboard() {
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">{alert.message}</p>
                     <div className="mt-3 flex justify-end">
-                      <Button size="sm" variant="ghost" className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-white" onClick={() => toast.success('Alert Resolved', { description: `${alert.title} has been marked as resolved` })}>
+                      <Button size="sm" variant="ghost" className="h-7 text-[10px] font-black uppercase tracking-widest hover:bg-white" onClick={() => handleAcknowledgeAlert(alert)}>
                         ACKNOWLEDGE
                       </Button>
                     </div>
                   </div>
                 </div>
-              )}
+              ) : <EmptyState message="No active system alerts were returned by the backend." />}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      {/* Audit Logs */}
+
       <Card className="border-none shadow-premium bg-linear-to-b from-card to-muted/20">
         <CardHeader className="pb-4 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg font-bold">Global Audit Trail</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">Comprehensive immutable log of all system activities</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Comprehensive immutable log of recent system activities</p>
             </div>
             <Button variant="outline" className="rounded-xl h-8 font-bold text-[10px]" onClick={() => navigate('/audit-logs')}>EXTENDED LOGS</Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {recentAuditLogs.map((log) =>
-              <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className={`w-1.5 h-8 rounded-full ${log.status === 'success' ? 'bg-green-500' :
-                    log.status === 'failed' ? 'bg-red-500' :
-                      'bg-yellow-500'}`
-                  } />
-                  <div>
-                    <p className="text-sm font-bold tracking-tight">{log.action}</p>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{log.user} • {log.ip}</p>
+          {recentAuditLogs.length > 0 ? (
+            <div className="space-y-2">
+              {recentAuditLogs.map((log) =>
+                <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-transparent hover:border-border/40 hover:shadow-sm transition-all duration-300">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-1.5 h-8 rounded-full ${log.status === 'success' ? 'bg-green-500' :
+                      log.status === 'failed' ? 'bg-red-500' :
+                        'bg-yellow-500'}`
+                    } />
+                    <div>
+                      <p className="text-sm font-bold tracking-tight">{log.action}</p>
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">{log.user} • {log.ip}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-primary uppercase">{log.time}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight max-w-37.5 truncate">{log.details}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-primary uppercase">{log.time}</p>
-                  <p className="text-[10px] font-medium text-muted-foreground leading-tight max-w-37.5 truncate">{log.details}</p>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ) : (
+            <EmptyState message="No recent audit activity was found in the backend." />
+          )}
         </CardContent>
       </Card>
+
       <Card className="border-none shadow-premium">
         <CardHeader className="pb-4 pt-6">
           <CardTitle className="text-lg font-bold">Administrative Command Center</CardTitle>
@@ -520,6 +613,7 @@ export default function SuperAdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
       <ConfirmModal
         open={isConfirmOpen}
         onOpenChange={setIsConfirmOpen}
@@ -529,5 +623,6 @@ export default function SuperAdminDashboard() {
         variant={confirmConfig?.variant}
         onConfirm={confirmConfig?.onConfirm}
       />
-    </div>);
+    </div>
+  );
 }

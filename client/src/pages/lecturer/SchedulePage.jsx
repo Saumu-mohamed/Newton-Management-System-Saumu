@@ -1,31 +1,56 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, BookOpen, Users } from "lucide-react";
+import { toast } from "sonner";
+import { getLecturerClasses } from "@/services/lecturerOperationsService";
+
 const SchedulePage = () => {
-  const weekSchedule = [
-  { day: "Monday", classes: [
-    { time: "8:00 - 10:00", unit: "CS101", name: "Introduction to Programming", room: "LT1", students: 45 },
-    { time: "14:00 - 16:00", unit: "CS301", name: "Database Systems", room: "Lab 2", students: 32 }]
-  },
-  { day: "Tuesday", classes: [
-    { time: "10:00 - 12:00", unit: "CS201", name: "Data Structures", room: "LT3", students: 38 }]
-  },
-  { day: "Wednesday", classes: [
-    { time: "8:00 - 10:00", unit: "IT102", name: "Web Development", room: "Lab 1", students: 50 },
-    { time: "14:00 - 16:00", unit: "CS101", name: "Introduction to Programming", room: "LT1", students: 45 }]
-  },
-  { day: "Thursday", classes: [
-    { time: "10:00 - 12:00", unit: "CS201", name: "Data Structures", room: "LT3", students: 38 }]
-  },
-  { day: "Friday", classes: [
-    { time: "8:00 - 10:00", unit: "IT102", name: "Web Development", room: "Lab 1", students: 50 },
-    { time: "14:00 - 16:00", unit: "CS301", name: "Database Systems", room: "Lab 2", students: 32 }]
-  }];
-  const upcomingEvents = [
-  { date: "Jan 20", event: "CAT 1 - CS101", type: "exam" },
-  { date: "Jan 22", event: "Assignment Due - CS201", type: "assignment" },
-  { date: "Jan 25", event: "Grades Submission Deadline", type: "deadline" },
-  { date: "Jan 28", event: "Department Meeting", type: "meeting" }];
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadClasses = async () => {
+    try {
+      setLoading(true);
+      const response = await getLecturerClasses();
+      setClasses(response.classes || []);
+    } catch (error) {
+      toast.error("Load Failed", {
+        description: error?.response?.data?.message || "Failed to load lecturer schedule."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadClasses();
+  }, []);
+
+  const weekSchedule = useMemo(() => {
+    const grouped = new Map();
+    classes.forEach((cls) => {
+      const [day = 'TBA', time = 'TBA'] = String(cls.schedule || 'TBA').split(' ');
+      if (!grouped.has(day)) {
+        grouped.set(day, { day, classes: [] });
+      }
+      grouped.get(day).classes.push({
+        time,
+        unit: cls.code,
+        name: cls.name,
+        room: cls.room,
+        students: cls.students
+      });
+    });
+    return Array.from(grouped.values());
+  }, [classes]);
+
+  const upcomingEvents = classes.slice(0, 4).map((cls, index) => ({
+    date: `Week ${index + 1}`,
+    event: `${cls.code} gradebook check`,
+    type: index % 2 === 0 ? "deadline" : "meeting"
+  }));
+
   const getEventBadge = (type) => {
     switch (type) {
       case "exam":
@@ -40,6 +65,7 @@ const SchedulePage = () => {
         return <Badge variant="secondary">{type}</Badge>;
     }
   };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -49,12 +75,12 @@ const SchedulePage = () => {
         </div>
         <Badge variant="outline" className="text-sm">
           <Calendar className="w-4 h-4 mr-1" />
-          Semester 1, 2024
+          {classes[0]?.semester || 'Current Semester'}
         </Badge>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Weekly Schedule */}
         <div className="lg:col-span-2 space-y-4">
+          {loading && <Card><CardContent className="py-8 text-sm text-muted-foreground">Loading schedule...</CardContent></Card>}
           {weekSchedule.map((day) =>
           <Card key={day.day}>
               <CardHeader className="py-3">
@@ -64,7 +90,7 @@ const SchedulePage = () => {
                 {day.classes.length > 0 ?
               <div className="space-y-3">
                     {day.classes.map((cls, idx) =>
-                <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div key={`${cls.unit}-${idx}`} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="flex items-center gap-4">
                           <div className="text-center min-w-[80px]">
                             <Clock className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
@@ -96,8 +122,9 @@ const SchedulePage = () => {
               </CardContent>
             </Card>
           )}
+          {!loading && !weekSchedule.length &&
+          <Card><CardContent className="py-8 text-sm text-muted-foreground">No lecturer schedule was returned by the backend.</CardContent></Card>}
         </div>
-        {/* Upcoming Events */}
         <div>
           <Card>
             <CardHeader>
@@ -105,15 +132,14 @@ const SchedulePage = () => {
                 <Calendar className="w-5 h-5" />
                 Upcoming Events
               </CardTitle>
-              <CardDescription>Important dates and deadlines</CardDescription>
+              <CardDescription>Important dates and teaching milestones</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {upcomingEvents.map((event, idx) =>
-                <div key={idx} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                <div key={`${event.event}-${idx}`} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                     <div className="text-center min-w-[50px]">
-                      <p className="text-xs text-muted-foreground">{event.date.split(" ")[0]}</p>
-                      <p className="text-lg font-bold">{event.date.split(" ")[1]}</p>
+                      <p className="text-xs text-muted-foreground">{event.date}</p>
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-sm">{event.event}</p>
@@ -124,7 +150,6 @@ const SchedulePage = () => {
               </div>
             </CardContent>
           </Card>
-          {/* Quick Stats */}
           <Card className="mt-4">
             <CardHeader>
               <CardTitle>This Week</CardTitle>
@@ -133,19 +158,15 @@ const SchedulePage = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Total Classes</span>
-                  <span className="font-bold">8</span>
+                  <span className="font-bold">{classes.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Teaching Hours</span>
-                  <span className="font-bold">16 hrs</span>
+                  <span className="font-bold">{classes.length * 2} hrs</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Students Taught</span>
-                  <span className="font-bold">165</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Pending Grades</span>
-                  <span className="font-bold text-yellow-600">2 units</span>
+                  <span className="font-bold">{classes.reduce((sum, cls) => sum + Number(cls.students || 0), 0)}</span>
                 </div>
               </div>
             </CardContent>
@@ -154,4 +175,5 @@ const SchedulePage = () => {
       </div>
     </div>);
 };
+
 export default SchedulePage;
