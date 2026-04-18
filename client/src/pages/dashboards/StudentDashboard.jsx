@@ -249,7 +249,7 @@ export default function StudentDashboard() {
         <StatsCard
           title="Current CGPA"
           value={typeof currentCGPA === 'number' ? currentCGPA.toFixed(2) : 'N/A'}
-          change="Awaiting live academic results data"
+          change="Computed from backend academic records"
           changeType="positive"
           icon={GraduationCap} />
         <StatsCard
@@ -306,7 +306,7 @@ export default function StudentDashboard() {
               <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-green-600/70">Current CGPA</p>
                 <p className="text-3xl font-black text-green-600">{typeof currentCGPA === 'number' ? currentCGPA.toFixed(2) : 'N/A'}</p>
-                <p className="text-xs font-medium text-green-600/60 mt-2">Live academic CGPA pending backend model</p>
+                <p className="text-xs font-medium text-green-600/60 mt-2">Live academic CGPA from backend records</p>
               </div>
               <div className="p-4 rounded-2xl bg-white shadow-xl shadow-green-500/10">
                 <GraduationCap className="h-7 w-7 text-green-600" />
@@ -320,7 +320,7 @@ export default function StudentDashboard() {
               <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-primary/70">Total Credits</p>
                 <p className="text-3xl font-black text-primary">{typeof totalCredits === 'number' ? totalCredits : 'N/A'}</p>
-                <p className="text-xs font-medium text-primary/60 mt-2">Live credit totals pending backend model</p>
+                <p className="text-xs font-medium text-primary/60 mt-2">Live credit totals from backend records</p>
               </div>
               <div className="p-4 rounded-2xl bg-white shadow-xl shadow-primary/10">
                 <BookOpen className="h-7 w-7 text-primary" />

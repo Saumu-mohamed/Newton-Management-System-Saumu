@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportToPDF } from '@/lib/export-utils';
 import { BankReconciliationModal } from '@/components/modals';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePaymentSocket } from '@/hooks/usePaymentSocket';
 import {
   getFinanceDashboard,
   retryMpesaTransaction,
@@ -40,6 +42,7 @@ import {
 
 
 export default function FinanceDashboard() {
+  const { token } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,9 +59,9 @@ export default function FinanceDashboard() {
   const topDefaulters = dashboardData?.topDefaulters || [];
   const examClearance = dashboardData?.examClearance || [];
   const partialPayments = dashboardData?.partialPayments || [];
-  const pendingTransactions = dashboardData?.pendingTransactions || mpesaTransactions.filter((t) => t.status !== 'Confirmed').length;
+  const pendingTransactions = dashboardData?.pendingTransactions || 0;
   const failedTodayCount = dashboardData?.failedTodayCount || 0;
-  const overdueStudents = dashboardData?.overdueStudents || topDefaulters.length;
+  const overdueStudents = dashboardData?.overdueStudents || 0;
   const collectionRate = dashboardData?.collectionRate || 0;
   const mpesaStatusLabel = pendingTransactions > 0 ? `${pendingTransactions} transactions pending callback` : 'All tracked transactions up to date';
   const collectedChange = collectionRate > 0 ? `${collectionRate}% collection rate from backend data` : 'No collection rate returned';
@@ -81,6 +84,20 @@ export default function FinanceDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  usePaymentSocket({
+    token,
+    enabled: Boolean(token),
+    onFinancePaymentUpdate: async (payment) => {
+      await fetchData();
+
+      if (payment?.status === "success") {
+        toast.success("New Payment Confirmed", {
+          description: `KES ${(payment.amount || 0).toLocaleString()} was confirmed${payment.transactionId ? ` with receipt ${payment.transactionId}` : ""}.`
+        });
+      }
+    }
+  });
 
 
   const navigate = useNavigate();
@@ -355,7 +372,7 @@ export default function FinanceDashboard() {
           </div>
           {paymentMethodData.length > 0 && (
             <PieChartCard title="Payment Methods (%)"
-              data={paymentMethodData.map(p => ({ name: p.method || p.name, value: p.value }))} />
+              data={paymentMethodData} />
           )}
         </div>
         <div className="grid gap-4 md:grid-cols-2">

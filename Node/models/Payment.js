@@ -4,21 +4,100 @@ const paymentSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student",
-        required: true
     },
-    amount: Number,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        index: true,
+    },
+    phone: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    amount: {
+        type: Number,
+        required: true,
+        min: 1,
+    },
     method: {
         type: String,
-        enum: ["mpesa", "bank", "cash", "card"]
+        enum: ["mpesa", "bank", "cash", "card"],
+        default: "mpesa",
+        required: true,
     },
-    transactionRef: String,
     status: {
         type: String,
         enum: ["pending", "success", "failed"],
-        default: "pending"
+        default: "pending",
+        index: true,
     },
-    transactionReference: String,
-
+    reference: {
+        type: String,
+        trim: true,
+        default: "School Fees",
+    },
+    transactionId: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    checkoutRequestId: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true,
+    },
+    merchantRequestId: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    transactionRef: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    transactionReference: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    resultCode: {
+        type: Number,
+        default: null,
+    },
+    resultDesc: {
+        type: String,
+        trim: true,
+        default: null,
+    },
+    callbackMetadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
+    rawCallback: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
+    isCallbackProcessed: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    callbackProcessedAt: {
+        type: Date,
+        default: null,
+    },
+    requestedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    completedAt: {
+        type: Date,
+        default: null,
+    },
     date: {
         type: Date,
         default: Date.now

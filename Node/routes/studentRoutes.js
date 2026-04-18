@@ -6,6 +6,7 @@ import {
     updateStudent,
     deleteStudent,
     getStudentDashboard,
+    getStudentResults,
     initiateStudentPayment,
 } from "../controllers/studentController.js";
 
@@ -27,6 +28,13 @@ router.post(
     authMiddleware,
     roleMiddleware("student"),
     initiateStudentPayment
+);
+
+router.get(
+    "/results",
+    authMiddleware,
+    roleMiddleware("student"),
+    getStudentResults
 );
 
 router.post(

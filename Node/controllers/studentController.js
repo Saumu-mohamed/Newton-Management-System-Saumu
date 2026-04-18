@@ -4,7 +4,8 @@ import AcademicEvent from "../models/AcademicEvent.js";
 import CourseRegistration from "../models/CourseRegistration.js";
 import AcademicResult from "../models/AcademicResult.js";
 import StudentDocument from "../models/StudentDocument.js";
-import MpesaTransaction from "../models/MpesaTransaction.js";
+import { initiateMpesaPayment } from "../src/controllers/paymentController.js";
+import { buildStudentResultsView } from "../services/studentResultsService.js";
 
 const formatCurrency = (value) => Number(value || 0);
 
@@ -187,8 +188,9 @@ export const getStudentDashboard = async (req, res) => {
             description: "Fee Payment",
             amount: formatCurrency(payment.amount),
             method: humanizePaymentMethod(payment.method),
-            reference: payment.transactionReference || payment.transactionRef || "N/A",
+            reference: payment.transactionId || payment.transactionReference || payment.transactionRef || "N/A",
             status: payment.status === "success" ? "Completed" : payment.status === "failed" ? "Failed" : "Pending",
+            checkoutRequestId: payment.checkoutRequestId || null,
         }));
 
         const deadlines = upcomingEvents
@@ -326,57 +328,26 @@ export const getStudentDashboard = async (req, res) => {
     }
 };
 
-export const initiateStudentPayment = async (req, res) => {
+export const getStudentResults = async (req, res) => {
     try {
-        const student = await Student.findOne({ email: req.user.email });
-
-        if (!student) {
-            return res.status(404).json({ message: "Student profile not found for the logged-in user" });
-        }
-
-        const balance = Math.max(Number(student.totalFee || 0) - Number(student.paidAmount || 0), 0);
-        const requestedAmount = Number(req.body?.amount || balance);
-        const amount = Math.min(Math.max(requestedAmount, 0), balance);
-
-        if (amount <= 0) {
-            return res.status(400).json({ message: "No outstanding balance available for payment." });
-        }
-
-        const transactionRef = `STK-${Date.now()}-${String(student._id).slice(-4).toUpperCase()}`;
-
-        const [payment] = await Promise.all([
-            Payment.create({
-                student: student._id,
-                amount,
-                method: "mpesa",
-                transactionRef,
-                transactionReference: transactionRef,
-                status: "pending",
-                date: new Date(),
-            }),
-            MpesaTransaction.create({
-                phone: req.body?.phone || req.user.phone || "N/A",
-                amount,
-                transactionRef,
-                status: "Pending Callback",
-                resultDesc: "STK push initiated from student portal",
-                timestamp: new Date(),
-            }),
-        ]);
-
-        res.status(201).json({
-            message: "Payment request created. Awaiting M-Pesa confirmation.",
-            payment: {
-                id: payment._id.toString(),
-                amount,
-                reference: transactionRef,
-                status: "Pending",
-            },
+        const response = await buildStudentResultsView({
+            userEmail: req.user.email,
+            semester: String(req.query.semester || "").trim(),
         });
+
+        if (response?.error) {
+            return res.status(response.error.status).json({ message: response.error.message });
+        }
+
+        return res.status(200).json(response);
     } catch (error) {
-        console.error("Initiate student payment error:", error);
-        res.status(500).json({ message: "Failed to initiate payment" });
+        console.error("Student results error:", error);
+        return res.status(500).json({ message: "Failed to load student results" });
     }
+};
+
+export const initiateStudentPayment = async (req, res) => {
+    return initiateMpesaPayment(req, res);
 };
 
 

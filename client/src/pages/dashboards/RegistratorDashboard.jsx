@@ -294,8 +294,8 @@ export default function RegistrarDashboard() {
           icon={AlertTriangle} />
         <StatsCard
           title="Academic Warnings"
-          value={(prerequisiteViolations.filter((item) => item.status === 'Warning').length || 0).toLocaleString()}
-          change="Derived from current registrations"
+          value={(kpis.academicWarnings || 0).toLocaleString()}
+          change="Returned by backend workflow rules"
           changeType="negative"
           icon={AlertCircle} />
         <StatsCard
