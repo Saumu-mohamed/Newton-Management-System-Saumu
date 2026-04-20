@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ROLE_LABELS } from '@/types/auth';
+import { getSidebarNavigation } from '@/services/navigationService';
 import {
   Sidebar,
   SidebarContent,
@@ -44,49 +46,29 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-const menuItems = {
-  superadmin: [
-    { title: 'Dashboard', url: '/superadmin/dashboard', icon: LayoutDashboard },
-    { title: 'Users', url: '/users', icon: Users },
-    { title: 'Campuses', url: '/campuses', icon: Building2 },
-    { title: 'Audit Logs', url: '/audit-logs', icon: ClipboardList, badge: '4' },
-    { title: 'Reports', url: '/reports', icon: BarChart3 },
-    { title: 'Settings', url: '/settings', icon: Settings }
-  ],
-  collegeadmin: [
-    { title: 'Dashboard', url: '/collegeadmin/dashboard', icon: LayoutDashboard },
-    { title: 'Departments', url: '/departments', icon: Building2 },
-    { title: 'Staff', url: '/staff', icon: UserCog },
-    { title: 'Students', url: '/students', icon: Users },
-    { title: 'Courses', url: '/courses', icon: BookOpen },
-    { title: 'Reports', url: '/reports', icon: BarChart3 }
-  ],
-  registrator: [
-    { title: 'Dashboard', url: '/registrator/dashboard', icon: LayoutDashboard },
-    { title: 'Registrations', url: '/registrations', icon: FileText, badge: '12' },
-    { title: 'Students', url: '/students', icon: Users },
-    { title: 'Transcripts', url: '/transcripts', icon: ClipboardList },
-    { title: 'Calendar', url: '/calendar', icon: Calendar }
-  ],
-  finance: [
-    { title: 'Dashboard', url: '/finance/dashboard', icon: LayoutDashboard },
-    { title: 'Payments', url: '/payments', icon: CreditCard, badge: '3' },
-    { title: 'Fee Structure', url: '/fee-structure', icon: Wallet },
-    { title: 'Reports', url: '/finance-reports', icon: BarChart3 }
-  ],
-  lecturer: [
-    { title: 'Dashboard', url: '/lecturer/dashboard', icon: LayoutDashboard },
-    { title: 'My Classes', url: '/my-classes', icon: School },
-    { title: 'Grades', url: '/grades', icon: ClipboardList },
-    { title: 'Schedule', url: '/schedule', icon: Calendar }
-  ],
-  student: [
-    { title: 'Dashboard', url: '/student/dashboard', icon: LayoutDashboard },
-    { title: 'My Courses', url: '/my-courses', icon: BookOpen },
-    { title: 'Results', url: '/results', icon: ClipboardList },
-    { title: 'Fees', url: '/fees', icon: Wallet, badge: 'Pending' },
-    { title: 'Timetable', url: '/timetable', icon: Calendar }
-  ]
+const iconByTitle = {
+  Dashboard: LayoutDashboard,
+  Users,
+  Campuses: Building2,
+  'Audit Logs': ClipboardList,
+  Reports: BarChart3,
+  Settings,
+  Departments: Building2,
+  Staff: UserCog,
+  Students: Users,
+  Courses: BookOpen,
+  Registrations: FileText,
+  Transcripts: ClipboardList,
+  Calendar,
+  Payments: CreditCard,
+  'Fee Structure': Wallet,
+  'My Classes': School,
+  Grades: ClipboardList,
+  Schedule: Calendar,
+  'My Courses': BookOpen,
+  Results: ClipboardList,
+  Fees: Wallet,
+  Timetable: Calendar
 };
 
 /**
@@ -97,10 +79,52 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const collapsed = state === 'collapsed';
+  const [backendItems, setBackendItems] = useState([]);
+  const [loadingNavigation, setLoadingNavigation] = useState(true);
+  const [navigationError, setNavigationError] = useState('');
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadSidebar = async () => {
+      if (!user?.role) {
+        return;
+      }
+
+      try {
+        setLoadingNavigation(true);
+        setNavigationError('');
+        const data = await getSidebarNavigation();
+
+        if (!ignore) {
+          setBackendItems(Array.isArray(data?.items) ? data.items : []);
+        }
+      } catch (error) {
+        console.error('Failed to load sidebar navigation:', error);
+        if (!ignore) {
+          setBackendItems([]);
+          setNavigationError(error?.response?.data?.message || 'Failed to load navigation.');
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingNavigation(false);
+        }
+      }
+    };
+
+    loadSidebar();
+
+    return () => {
+      ignore = true;
+    };
+  }, [user?.role]);
 
   if (!user) return null;
 
-  const items = menuItems[user.role] || [];
+  const items = backendItems.map((item) => ({
+    ...item,
+    icon: item.icon || iconByTitle[item.title] || LayoutDashboard
+  }));
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -179,6 +203,21 @@ export function AppSidebar() {
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
+              {!collapsed && loadingNavigation && !items.length && (
+                <div className="px-4 py-2 text-xs text-sidebar-foreground/50">
+                  Loading navigation...
+                </div>
+              )}
+              {!collapsed && navigationError && !items.length && (
+                <div className="px-4 py-2 text-xs text-destructive">
+                  {navigationError}
+                </div>
+              )}
+              {!collapsed && !loadingNavigation && !navigationError && !items.length && (
+                <div className="px-4 py-2 text-xs text-sidebar-foreground/50">
+                  No navigation items returned by the backend.
+                </div>
+              )}
               <SidebarMenu className="gap-2">
                 {items.map((item) => {
                   const isActive = location.pathname === item.url;

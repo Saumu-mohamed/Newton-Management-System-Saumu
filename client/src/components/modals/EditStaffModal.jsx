@@ -20,6 +20,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const staffSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -28,8 +29,6 @@ const staffSchema = z.object({
   position: z.string().min(1, 'Position is required'),
   status: z.enum(['Active', 'Inactive', 'On Leave'])
 });
-const departments = ['Computer Science', 'Electrical Eng.', 'Civil Engineering', 'Finance', 'Registry', 'Administration', 'Library', 'IT'];
-const positions = ['Professor', 'Senior Lecturer', 'Lecturer', 'HOD', 'Finance Officer', 'Registrar', 'College Admin', 'Librarian', 'IT Administrator'];
 export function EditStaffModal({ open, onOpenChange, staff, onSave }) {
   const form = useForm({
     resolver: zodResolver(staffSchema),
@@ -54,19 +53,23 @@ export function EditStaffModal({ open, onOpenChange, staff, onSave }) {
       });
     }
   }, [staff, form]);
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (staff) {
-      onSave({
-        id: staff.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        department: data.department,
-        position: data.position,
-        status: data.status
-      });
-      toast.success('Staff Updated', { description: `${data.name} has been updated successfully.` });
-      onOpenChange(false);
+      try {
+        await onSave({
+          id: staff.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          department: data.department,
+          position: data.position,
+          status: data.status
+        });
+        toast.success('Staff Updated', { description: `${data.name} has been updated successfully.` });
+        onOpenChange(false);
+      } catch (error) {
+        toast.error('Update Failed', { description: error?.response?.data?.message || 'Failed to update staff member.' });
+      }
     }
   };
   return (
@@ -103,33 +106,11 @@ export function EditStaffModal({ open, onOpenChange, staff, onSave }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Department</Label>
-                <Select
-                  value={form.watch('department')}
-                  onValueChange={(value) => form.setValue('department', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) =>
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input {...form.register('department')} />
               </div>
               <div className="grid gap-2">
                 <Label>Position</Label>
-                <Select
-                  value={form.watch('position')}
-                  onValueChange={(value) => form.setValue('position', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positions.map((pos) =>
-                    <SelectItem key={pos} value={pos}>{pos}</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input {...form.register('position')} />
               </div>
             </div>
             <div className="grid gap-2">

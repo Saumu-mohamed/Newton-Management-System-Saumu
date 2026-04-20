@@ -1,4 +1,5 @@
 export const roleHierarchy = {
+    superadmin: 5,
     SuperAdmin: 5,
     collegeadmin: 4,
     registrator: 3,

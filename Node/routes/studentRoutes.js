@@ -4,14 +4,38 @@ import {
     getStudents,
     getStudentById,
     updateStudent,
-    deleteStudent
+    deleteStudent,
+    getStudentDashboard,
+    getStudentResults,
+    initiateStudentPayment,
 } from "../controllers/studentController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
 import permissionMiddleware from "../middleware/permissionMiddleware.js";
+import roleMiddleware from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
+router.get(
+    "/dashboard",
+    authMiddleware,
+    roleMiddleware("student"),
+    getStudentDashboard
+);
+
+router.post(
+    "/fees/payment",
+    authMiddleware,
+    roleMiddleware("student"),
+    initiateStudentPayment
+);
+
+router.get(
+    "/results",
+    authMiddleware,
+    roleMiddleware("student"),
+    getStudentResults
+);
 
 router.post(
     "/",

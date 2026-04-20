@@ -20,6 +20,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const campusSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   location: z.string().min(2, 'Location is required'),
@@ -55,22 +56,26 @@ export function EditCampusModal({ open, onOpenChange, campus, onSave }) {
       });
     }
   }, [campus, form]);
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (campus) {
-      onSave({
-        id: campus.id,
-        name: data.name,
-        location: data.location,
-        students: campus.students,
-        staff: campus.staff,
-        capacity: data.capacity,
-        phone: data.phone,
-        email: data.email,
-        status: data.status,
-        established: data.established
-      });
-      toast.success('Campus Updated', { description: `${data.name} has been updated successfully.` });
-      onOpenChange(false);
+      try {
+        await onSave({
+          id: campus.id,
+          name: data.name,
+          location: data.location,
+          students: campus.students,
+          staff: campus.staff,
+          capacity: data.capacity,
+          phone: data.phone,
+          email: data.email,
+          status: data.status,
+          established: data.established
+        });
+        toast.success('Campus Updated', { description: `${data.name} has been updated successfully.` });
+        onOpenChange(false);
+      } catch (error) {
+        toast.error('Update Failed', { description: error?.response?.data?.message || 'Failed to update campus.' });
+      }
     }
   };
   return (

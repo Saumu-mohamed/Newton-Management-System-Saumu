@@ -4,6 +4,7 @@ export const permissions = {
         "delete:user",
         "update:user",
         "view:user",
+        "import:user",
         "create:student",
         "delete:student",
         "update:student",
@@ -16,6 +17,7 @@ export const permissions = {
 
     collegeadmin: [
         "create:user",
+        "view:user",
         "create:student",
         "update:student",
         "view:student",

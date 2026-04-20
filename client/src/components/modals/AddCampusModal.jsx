@@ -19,6 +19,7 @@ import {
   SelectValue } from
 '@/components/ui/select';
 import { toast } from 'sonner';
+
 const campusSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   location: z.string().min(2, 'Location is required'),
@@ -41,19 +42,23 @@ export function AddCampusModal({ open, onOpenChange, onAdd }) {
       established: new Date().getFullYear().toString()
     }
   });
-  const onSubmit = (data) => {
-    onAdd({
-      name: data.name,
-      location: data.location,
-      capacity: data.capacity,
-      phone: data.phone,
-      email: data.email,
-      status: data.status,
-      established: data.established
-    });
-    toast.success('Campus Added', { description: `${data.name} has been created successfully.` });
-    form.reset();
-    onOpenChange(false);
+  const onSubmit = async (data) => {
+    try {
+      await onAdd({
+        name: data.name,
+        location: data.location,
+        capacity: data.capacity,
+        phone: data.phone,
+        email: data.email,
+        status: data.status,
+        established: data.established
+      });
+      toast.success('Campus Added', { description: `${data.name} has been created successfully.` });
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      toast.error('Create Failed', { description: error?.response?.data?.message || 'Failed to create campus.' });
+    }
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

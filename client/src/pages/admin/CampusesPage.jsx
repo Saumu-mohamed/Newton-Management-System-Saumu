@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,65 +23,41 @@ import {
   AddCampusModal,
   ConfirmModal } from
 '@/components/modals';
-const initialCampuses = [
-{
-  id: 1,
-  name: 'Main Campus',
-  location: 'Nairobi, Kenya',
-  students: 3200,
-  staff: 185,
-  capacity: 4000,
-  phone: '+254 20 123 4567',
-  email: 'main@cms.edu',
-  status: 'Active',
-  established: '1985'
-},
-{
-  id: 2,
-  name: 'Mombasa Campus',
-  location: 'Mombasa, Kenya',
-  students: 1800,
-  staff: 98,
-  capacity: 2500,
-  phone: '+254 41 234 5678',
-  email: 'mombasa@cms.edu',
-  status: 'Active',
-  established: '1998'
-},
-{
-  id: 3,
-  name: 'Kisumu Campus',
-  location: 'Kisumu, Kenya',
-  students: 1200,
-  staff: 72,
-  capacity: 1800,
-  phone: '+254 57 345 6789',
-  email: 'kisumu@cms.edu',
-  status: 'Active',
-  established: '2005'
-},
-{
-  id: 4,
-  name: 'Nakuru Campus',
-  location: 'Nakuru, Kenya',
-  students: 980,
-  staff: 58,
-  capacity: 1500,
-  phone: '+254 51 456 7890',
-  email: 'nakuru@cms.edu',
-  status: 'Active',
-  established: '2010'
-}];
+import {
+  createCampusRecord,
+  deleteCampusRecord,
+  getCampuses,
+  updateCampusRecord } from
+'@/services/adminUtilityService';
+
 export default function CampusesPage() {
-  const [campuses, setCampuses] = useState(initialCampuses);
+  const [campuses, setCampuses] = useState([]);
+  const [stats, setStats] = useState({ totalCampuses: 0, totalStudents: 0, totalStaff: 0, countiesCovered: 0 });
+  const [loading, setLoading] = useState(true);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedCampus, setSelectedCampus] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
-  const totalStudents = campuses.reduce((sum, c) => sum + c.students, 0);
-  const totalStaff = campuses.reduce((sum, c) => sum + c.staff, 0);
+
+  const loadCampuses = async () => {
+    try {
+      setLoading(true);
+      const data = await getCampuses();
+      setCampuses(data.campuses || []);
+      setStats(data.stats || { totalCampuses: 0, totalStudents: 0, totalStaff: 0, countiesCovered: 0 });
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load campuses.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCampuses();
+  }, []);
+
   const handleView = (campus) => {
     setSelectedCampus(campus);
     setIsViewOpen(true);
@@ -94,18 +70,25 @@ export default function CampusesPage() {
     setDeleteItem(campus);
     setIsDeleteOpen(true);
   };
-  const confirmDelete = () => {
-    if (deleteItem) {
-      setCampuses(campuses.filter((c) => c.id !== deleteItem.id));
+  const confirmDelete = async () => {
+    if (!deleteItem) return;
+    try {
+      await deleteCampusRecord(deleteItem.id);
       toast.success('Campus Deleted', { description: `${deleteItem.name} has been removed.` });
+      setIsDeleteOpen(false);
+      setDeleteItem(null);
+      await loadCampuses();
+    } catch (error) {
+      toast.error('Delete Failed', { description: error?.response?.data?.message || 'Failed to delete campus.' });
     }
   };
-  const handleSave = (data) => {
-    setCampuses(campuses.map((c) => c.id === data.id ? data : c));
+  const handleSave = async (data) => {
+    await updateCampusRecord(data.id, data);
+    await loadCampuses();
   };
-  const handleAdd = (data) => {
-    const newCampus = { ...data, id: Math.max(...campuses.map((c) => c.id)) + 1, students: 0, staff: 0 };
-    setCampuses([...campuses, newCampus]);
+  const handleAdd = async (data) => {
+    await createCampusRecord(data);
+    await loadCampuses();
   };
   const campusColumns = [
   { key: 'name', label: 'Campus Name', sortable: true },
@@ -161,53 +144,53 @@ export default function CampusesPage() {
         <Card className="transition-all hover:shadow-md">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{campuses.length}</p>
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalCampuses}</p>
                 <p className="text-xs text-muted-foreground">Total Campuses</p>
+                </div>
               </div>
-            </div>
           </CardContent>
         </Card>
         <Card className="transition-all hover:shadow-md">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <GraduationCap className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalStudents.toLocaleString()}</p>
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <GraduationCap className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalStudents.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Total Students</p>
+                </div>
               </div>
-            </div>
           </CardContent>
         </Card>
         <Card className="transition-all hover:shadow-md">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Users className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalStaff}</p>
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                <p className="text-xl sm:text-2xl font-bold">{stats.totalStaff}</p>
                 <p className="text-xs text-muted-foreground">Total Staff</p>
+                </div>
               </div>
-            </div>
           </CardContent>
         </Card>
         <Card className="transition-all hover:shadow-md">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <MapPin className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">4</p>
+                <div className="p-2 rounded-lg bg-yellow-500/10">
+                  <MapPin className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                <p className="text-xl sm:text-2xl font-bold">{stats.countiesCovered}</p>
                 <p className="text-xs text-muted-foreground">Counties Covered</p>
+                </div>
               </div>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -261,7 +244,10 @@ export default function CampusesPage() {
           <CardTitle className="text-sm sm:text-base font-medium">All Campuses</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
+          {loading ?
+          <div className="py-8 text-sm text-muted-foreground">Loading campuses...</div> :
           <DataTable columns={campusColumns} data={campuses} searchable={false} pageSize={10} />
+          }
         </CardContent>
       </Card>
       {/* Modals */}

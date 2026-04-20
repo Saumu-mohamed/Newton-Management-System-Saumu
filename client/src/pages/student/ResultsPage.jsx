@@ -1,33 +1,57 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClipboardList, Download, TrendingUp, Award, BookOpen, GraduationCap } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { exportToPDF } from "@/lib/export-utils";
+import { getStudentResults } from "@/services/studentDashboardService";
+
+const gradeBadgeClassMap = {
+  A: "bg-green-100 text-green-800",
+  B: "bg-blue-100 text-blue-800",
+  C: "bg-yellow-100 text-yellow-800",
+  D: "bg-orange-100 text-orange-800",
+  E: "bg-red-100 text-red-800"
+};
+
 const ResultsPage = () => {
-  const currentResults = [
-  { code: "CS301", name: "Database Systems", cat1: 25, cat2: 23, assignment: 8, exam: 52, total: 78, grade: "B", points: 3.0 },
-  { code: "CS302", name: "Software Engineering", cat1: 28, cat2: 26, assignment: 9, exam: 58, total: 85, grade: "A", points: 4.0 },
-  { code: "CS303", name: "Computer Networks", cat1: 22, cat2: 20, assignment: 7, exam: 48, total: 70, grade: "B", points: 3.0 },
-  { code: "CS304", name: "Operating Systems", cat1: 26, cat2: 24, assignment: 8, exam: 55, total: 80, grade: "A", points: 4.0 },
-  { code: "GEN101", name: "Communication Skills", cat1: 27, cat2: 25, assignment: 9, exam: 56, total: 82, grade: "A", points: 4.0 }];
-  const semesterSummary = [
-  { semester: "Year 1 Sem 1", gpa: 3.45, credits: 15, status: "Completed" },
-  { semester: "Year 1 Sem 2", gpa: 3.52, credits: 15, status: "Completed" },
-  { semester: "Year 2 Sem 1", gpa: 3.68, credits: 16, status: "Completed" },
-  { semester: "Year 2 Sem 2", gpa: 3.55, credits: 15, status: "Completed" },
-  { semester: "Year 3 Sem 1", gpa: 3.62, credits: 14, status: "In Progress" }];
-  const getGradeBadge = (grade) => {
-    const colors = {
-      "A": "bg-green-100 text-green-800",
-      "B": "bg-blue-100 text-blue-800",
-      "C": "bg-yellow-100 text-yellow-800",
-      "D": "bg-orange-100 text-orange-800",
-      "E": "bg-red-100 text-red-800"
-    };
-    return <Badge className={colors[grade] || "bg-gray-100 text-gray-800"}>{grade}</Badge>;
+  const [resultsView, setResultsView] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedSemester, setSelectedSemester] = useState("");
+
+  const loadResults = async (semester = "") => {
+    try {
+      setLoading(true);
+      const data = await getStudentResults(semester ? { semester } : {});
+      setResultsView(data);
+      setSelectedSemester(data?.summary?.selectedSemester || "");
+    } catch (error) {
+      toast.error("Load Failed", {
+        description: error?.response?.data?.message || "Failed to load results."
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadResults();
+  }, []);
+
+  const summary = resultsView?.summary || {
+    currentGpa: 0,
+    cgpa: 0,
+    totalCredits: 0,
+    classStanding: "N/A",
+    selectedSemester: ""
+  };
+  const currentResults = resultsView?.currentResults || [];
+  const academicHistory = resultsView?.academicHistory || [];
+  const semesterOptions = resultsView?.semesterOptions || [];
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -36,32 +60,48 @@ const ResultsPage = () => {
           <p className="text-muted-foreground">View your academic performance and grades</p>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="sem1-2024">
-            <SelectTrigger className="w-[180px]">
+          <Select
+            value={selectedSemester}
+            onValueChange={(value) => {
+              setSelectedSemester(value);
+              loadResults(value);
+            }}
+          >
+            <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sem1-2024">Year 3 Sem 1</SelectItem>
-              <SelectItem value="sem2-2023">Year 2 Sem 2</SelectItem>
-              <SelectItem value="sem1-2023">Year 2 Sem 1</SelectItem>
+              {semesterOptions.map((semester) => (
+                <SelectItem key={semester} value={semester}>
+                  {semester}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => toast({ title: "Download", description: "Downloading result slip..." })}>
+          <Button
+            variant="outline"
+            onClick={() => exportToPDF({
+              data: currentResults,
+              filename: "result-slip",
+              title: `Results - ${summary.selectedSemester || "Current Semester"}`
+            })}
+          >
             <Download className="w-4 h-4 mr-2" />
             Result Slip
           </Button>
         </div>
       </div>
-      {/* Academic Summary */}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Current GPA</p>
-                <p className="text-2xl font-bold">3.62</p>
+                <p className="text-2xl font-bold">{Number(summary.currentGpa || 0).toFixed(2)}</p>
                 <p className="text-xs text-green-600 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> +0.07 from last sem
+                  <TrendingUp className="w-3 h-3" />
+                  Backend-calculated semester GPA
                 </p>
               </div>
               <Award className="w-8 h-8 text-yellow-500" />
@@ -73,7 +113,7 @@ const ResultsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">CGPA</p>
-                <p className="text-2xl font-bold">3.56</p>
+                <p className="text-2xl font-bold">{Number(summary.cgpa || 0).toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">Cumulative</p>
               </div>
               <GraduationCap className="w-8 h-8 text-blue-600" />
@@ -85,8 +125,8 @@ const ResultsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Credits</p>
-                <p className="text-2xl font-bold">75</p>
-                <p className="text-xs text-muted-foreground">of 120 required</p>
+                <p className="text-2xl font-bold">{summary.totalCredits || 0}</p>
+                <p className="text-xs text-muted-foreground">Earned so far</p>
               </div>
               <BookOpen className="w-8 h-8 text-purple-600" />
             </div>
@@ -97,54 +137,65 @@ const ResultsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Class Standing</p>
-                <p className="text-2xl font-bold">2nd Class</p>
-                <p className="text-xs text-muted-foreground">Upper Division</p>
+                <p className="text-2xl font-bold">{summary.classStanding || "N/A"}</p>
+                <p className="text-xs text-muted-foreground">Backend-derived classification</p>
               </div>
               <ClipboardList className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
       </div>
-      {/* Current Semester Results */}
+
       <Card>
         <CardHeader>
-          <CardTitle>Year 3 Semester 1 Results</CardTitle>
-          <CardDescription>Detailed breakdown of your current semester performance</CardDescription>
+          <CardTitle>{summary.selectedSemester || "Current Semester"} Results</CardTitle>
+          <CardDescription>Detailed breakdown of your semester performance</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Unit Code</TableHead>
-                <TableHead>Unit Name</TableHead>
-                <TableHead className="text-center">CAT 1 (30)</TableHead>
-                <TableHead className="text-center">CAT 2 (30)</TableHead>
-                <TableHead className="text-center">Assignment (10)</TableHead>
-                <TableHead className="text-center">Exam (30)</TableHead>
-                <TableHead className="text-center">Total (100)</TableHead>
-                <TableHead className="text-center">Grade</TableHead>
-                <TableHead className="text-center">Points</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentResults.map((result) =>
-              <TableRow key={result.code}>
-                  <TableCell className="font-medium">{result.code}</TableCell>
-                  <TableCell>{result.name}</TableCell>
-                  <TableCell className="text-center">{result.cat1}</TableCell>
-                  <TableCell className="text-center">{result.cat2}</TableCell>
-                  <TableCell className="text-center">{result.assignment}</TableCell>
-                  <TableCell className="text-center">{result.exam}</TableCell>
-                  <TableCell className="text-center font-bold">{result.total}</TableCell>
-                  <TableCell className="text-center">{getGradeBadge(result.grade)}</TableCell>
-                  <TableCell className="text-center">{result.points.toFixed(1)}</TableCell>
+          {loading ? (
+            <div className="py-10 text-sm text-muted-foreground">Loading results...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Unit Code</TableHead>
+                  <TableHead>Unit Name</TableHead>
+                  <TableHead className="text-center">CAT</TableHead>
+                  <TableHead className="text-center">Exam</TableHead>
+                  <TableHead className="text-center">Total</TableHead>
+                  <TableHead className="text-center">Grade</TableHead>
+                  <TableHead className="text-center">Points</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {currentResults.map((result) => (
+                  <TableRow key={result.id}>
+                    <TableCell className="font-medium">{result.unit}</TableCell>
+                    <TableCell>{result.name}</TableCell>
+                    <TableCell className="text-center">{result.cat}</TableCell>
+                    <TableCell className="text-center">{result.exam}</TableCell>
+                    <TableCell className="text-center font-bold">{result.total}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge className={gradeBadgeClassMap[result.grade] || "bg-gray-100 text-gray-800"}>
+                        {result.grade}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">{Number(result.points || 0).toFixed(1)}</TableCell>
+                  </TableRow>
+                ))}
+                {!currentResults.length && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                      No results found for the selected semester.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
-      {/* Semester History */}
+
       <Card>
         <CardHeader>
           <CardTitle>Academic History</CardTitle>
@@ -158,24 +209,25 @@ const ResultsPage = () => {
                 <TableHead className="text-center">Credits</TableHead>
                 <TableHead className="text-center">GPA</TableHead>
                 <TableHead className="text-center">Status</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {semesterSummary.map((sem) =>
-              <TableRow key={sem.semester}>
-                  <TableCell className="font-medium">{sem.semester}</TableCell>
-                  <TableCell className="text-center">{sem.credits}</TableCell>
-                  <TableCell className="text-center font-semibold">{sem.gpa.toFixed(2)}</TableCell>
+              {academicHistory.map((semester) => (
+                <TableRow key={semester.semester}>
+                  <TableCell className="font-medium">{semester.semester}</TableCell>
+                  <TableCell className="text-center">{semester.credits}</TableCell>
+                  <TableCell className="text-center font-semibold">{Number(semester.gpa || 0).toFixed(2)}</TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={sem.status === "Completed" ? "default" : "secondary"}>
-                      {sem.status}
+                    <Badge variant={semester.status === "Selected" ? "default" : "secondary"}>
+                      {semester.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" onClick={() => toast({ title: "View Results", description: `Opening results for ${sem.semester}...` })}>
-                      View Details
-                    </Button>
+                </TableRow>
+              ))}
+              {!academicHistory.length && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
+                    No academic history is available yet.
                   </TableCell>
                 </TableRow>
               )}
@@ -183,6 +235,8 @@ const ResultsPage = () => {
           </Table>
         </CardContent>
       </Card>
-    </div>);
+    </div>
+  );
 };
+
 export default ResultsPage;

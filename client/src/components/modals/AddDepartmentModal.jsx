@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
 const departmentSchema = z.object({
   name: z.string().min(2, 'Department name must be at least 2 characters').max(100),
   faculty: z.string().min(1, 'Please select a faculty'),
@@ -38,8 +39,6 @@ const departmentSchema = z.object({
   phone: z.string().optional(),
   description: z.string().optional()
 });
-const faculties = ['Engineering', 'Business', 'Health Sciences', 'Science', 'Arts & Humanities', 'Law'];
-const heads = ['Dr. James Kiprop', 'Prof. Susan Wanjiku', 'Dr. Peter Kamau', 'Dr. Grace Muthoni', 'Mr. John Otieno', 'Prof. Mary Njeri', 'Dr. Anne Wambui', 'Prof. David Mwangi'];
 export function AddDepartmentModal({ open, onOpenChange, onSubmit }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm({
@@ -100,20 +99,9 @@ export function AddDepartmentModal({ open, onOpenChange, onSubmit }) {
                 render={({ field }) =>
                 <FormItem>
                     <FormLabel>Faculty *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select faculty" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {faculties.map((fac) =>
-                      <SelectItem key={fac} value={fac}>
-                            {fac}
-                          </SelectItem>
-                      )}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Enter faculty name" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 } />
@@ -123,20 +111,9 @@ export function AddDepartmentModal({ open, onOpenChange, onSubmit }) {
                 render={({ field }) =>
                 <FormItem>
                     <FormLabel>Head of Department *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select HoD" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {heads.map((head) =>
-                      <SelectItem key={head} value={head}>
-                            {head}
-                          </SelectItem>
-                      )}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Enter head of department" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 } />

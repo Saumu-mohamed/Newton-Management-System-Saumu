@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,48 +19,111 @@ import {
   AddStudentModal,
   ConfirmModal } from
 '@/components/modals';
-const initialStudents = [
-{ id: 1, regNo: 'CS/2023/001', name: 'Faith Achieng', email: 'f.achieng@cms.edu', course: 'BSc Computer Science', year: 3, campus: 'Main', status: 'Active' },
-{ id: 2, regNo: 'CS/2023/012', name: 'Peter Kamau', email: 'p.kamau@cms.edu', course: 'BSc Computer Science', year: 3, campus: 'Main', status: 'Active' },
-{ id: 3, regNo: 'ENG/2023/045', name: 'Grace Wanjiku', email: 'g.wanjiku@cms.edu', course: 'BEng Electrical', year: 2, campus: 'Mombasa', status: 'Active' },
-{ id: 4, regNo: 'BUS/2024/089', name: 'John Mwangi', email: 'j.mwangi@cms.edu', course: 'BCom Accounting', year: 1, campus: 'Main', status: 'Active' },
-{ id: 5, regNo: 'MED/2022/012', name: 'Susan Njeri', email: 's.njeri@cms.edu', course: 'MBBS Medicine', year: 4, campus: 'Main', status: 'Active' },
-{ id: 6, regNo: 'CS/2022/067', name: 'James Ochieng', email: 'j.ochieng@cms.edu', course: 'BSc Computer Science', year: 4, campus: 'Kisumu', status: 'Active' },
-{ id: 7, regNo: 'ENG/2024/023', name: 'Mary Wambui', email: 'm.wambui@cms.edu', course: 'BEng Civil', year: 1, campus: 'Main', status: 'Active' },
-{ id: 8, regNo: 'BUS/2023/056', name: 'David Mwangi', email: 'd.mwangi@cms.edu', course: 'BCom Marketing', year: 2, campus: 'Nakuru', status: 'Probation' }];
+import { exportToCSV } from '@/lib/export-utils';
+import {
+  createAcademicStudent,
+  deleteAcademicStudent,
+  getAcademicStudents,
+  getAcademicCourses,
+  updateAcademicStudent } from
+'@/services/academicService';
+
 export default function StudentsPage() {
-  const [students, setStudents] = useState(initialStudents);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
+  const [courseOptions, setCourseOptions] = useState([]);
+  const [campusOptions, setCampusOptions] = useState([]);
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const [studentData, courseData] = await Promise.all([
+      getAcademicStudents(),
+      getAcademicCourses()
+      ]);
+      const nextStudents = studentData || [];
+      const courseNames = (courseData?.courses || []).map((course) => course.name).filter(Boolean);
+      const studentCourses = nextStudents.map((student) => student.course).filter(Boolean);
+      const campuses = nextStudents.map((student) => student.campus).filter(Boolean);
+      setStudents(nextStudents);
+      setCourseOptions(Array.from(new Set([...courseNames, ...studentCourses])));
+      setCampusOptions(Array.from(new Set(campuses.length ? campuses : ['Main'])));
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load students.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
   const handleView = (student) => {
     setSelectedStudent(student);
     setIsViewOpen(true);
   };
+
   const handleEdit = (student) => {
     setSelectedStudent(student);
     setIsEditOpen(true);
   };
+
   const handleDelete = (student) => {
     setDeleteItem(student);
     setIsDeleteOpen(true);
   };
-  const confirmDelete = () => {
-    if (deleteItem) {
-      setStudents(students.filter((s) => s.id !== deleteItem.id));
+
+  const confirmDelete = async () => {
+    if (!deleteItem) return;
+    try {
+      await deleteAcademicStudent(deleteItem.id);
       toast.success('Student Deleted', { description: `${deleteItem.name} has been removed.` });
+      setIsDeleteOpen(false);
+      setDeleteItem(null);
+      await loadStudents();
+    } catch (error) {
+      toast.error('Delete Failed', { description: error?.response?.data?.message || 'Failed to delete student.' });
     }
   };
-  const handleSave = (data) => {
-    setStudents(students.map((s) => s.id === data.id ? data : s));
+
+  const handleSave = async (data) => {
+    try {
+      await updateAcademicStudent(data.id, {
+        ...data,
+        registrationNumber: data.regNo,
+        program: data.course,
+        faculty: selectedStudent?.faculty || 'General'
+      });
+      await loadStudents();
+    } catch (error) {
+      toast.error('Update Failed', { description: error?.response?.data?.message || 'Failed to update student.' });
+      throw error;
+    }
   };
-  const handleAdd = (data) => {
-    const newStudent = { ...data, id: Math.max(...students.map((s) => s.id)) + 1 };
-    setStudents([...students, newStudent]);
+
+  const handleAdd = async (data) => {
+    try {
+      await createAcademicStudent({
+        ...data,
+        registrationNumber: data.regNo,
+        program: data.course,
+        faculty: 'General',
+        totalFee: 120000
+      });
+      await loadStudents();
+    } catch (error) {
+      toast.error('Create Failed', { description: error?.response?.data?.message || 'Failed to create student.' });
+      throw error;
+    }
   };
+
   const studentColumns = [
   { key: 'regNo', label: 'Reg No', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
@@ -89,16 +152,16 @@ export default function StudentsPage() {
           </Button>
         </div>
   }];
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Students</h1>
           <p className="text-sm text-muted-foreground">Manage all enrolled students</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.success('Exporting', { description: 'Exporting student list...' })}>
+          <Button variant="outline" size="sm" onClick={() => exportToCSV({ data: students, filename: 'students-list' })}>
             <Download className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Export</span>
           </Button>
@@ -108,7 +171,7 @@ export default function StudentsPage() {
           </Button>
         </div>
       </div>
-      {/* Stats */}
+
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Card className="transition-all hover:shadow-md">
           <CardContent className="p-4">
@@ -156,28 +219,31 @@ export default function StudentsPage() {
                 <GraduationCap className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-bold">4</p>
+                <p className="text-xl sm:text-2xl font-bold">{new Set(students.map((student) => student.campus)).size}</p>
                 <p className="text-xs text-muted-foreground">Campuses</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-      {/* Table */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm sm:text-base font-medium">All Students</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
+          {loading ?
+          <div className="py-8 text-sm text-muted-foreground">Loading students...</div> :
           <DataTable
             columns={studentColumns}
             data={students}
             searchPlaceholder="Search students..."
             pageSize={10}
             exportable />
+          }
         </CardContent>
       </Card>
-      {/* Modals */}
+
       <ViewStudentModal
         open={isViewOpen}
         onOpenChange={setIsViewOpen}
@@ -186,11 +252,15 @@ export default function StudentsPage() {
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
         student={selectedStudent}
-        onSave={handleSave} />
+        onSave={handleSave}
+        courses={courseOptions}
+        campuses={campusOptions} />
       <AddStudentModal
         open={isAddOpen}
         onOpenChange={setIsAddOpen}
-        onAdd={handleAdd} />
+        onAdd={handleAdd}
+        courses={courseOptions}
+        campuses={campusOptions} />
       <ConfirmModal
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}

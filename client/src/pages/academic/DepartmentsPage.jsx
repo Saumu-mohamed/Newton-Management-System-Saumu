@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,16 +14,16 @@ import {
   Trash2 } from
 'lucide-react';
 import { AddDepartmentModal, EditDepartmentModal, ViewDepartmentModal, ConfirmModal } from '@/components/modals';
-const departments = [
-{ id: 1, name: 'Computer Science', faculty: 'Engineering', head: 'Dr. James Kiprop', students: 320, lecturers: 18, courses: 24, status: 'Active' },
-{ id: 2, name: 'Electrical Engineering', faculty: 'Engineering', head: 'Prof. Susan Wanjiku', students: 280, lecturers: 15, courses: 22, status: 'Active' },
-{ id: 3, name: 'Civil Engineering', faculty: 'Engineering', head: 'Dr. Peter Kamau', students: 245, lecturers: 14, courses: 20, status: 'Active' },
-{ id: 4, name: 'Accounting', faculty: 'Business', head: 'Dr. Grace Muthoni', students: 380, lecturers: 12, courses: 18, status: 'Active' },
-{ id: 5, name: 'Marketing', faculty: 'Business', head: 'Mr. John Otieno', students: 290, lecturers: 10, courses: 15, status: 'Active' },
-{ id: 6, name: 'Medicine', faculty: 'Health Sciences', head: 'Prof. Mary Njeri', students: 180, lecturers: 22, courses: 30, status: 'Active' },
-{ id: 7, name: 'Nursing', faculty: 'Health Sciences', head: 'Dr. Anne Wambui', students: 220, lecturers: 16, courses: 20, status: 'Active' },
-{ id: 8, name: 'Mathematics', faculty: 'Science', head: 'Prof. David Mwangi', students: 150, lecturers: 12, courses: 16, status: 'Active' }];
+import {
+  createAcademicDepartment,
+  deleteAcademicDepartment,
+  getAcademicDepartments,
+  updateAcademicDepartment } from
+'@/services/academicService';
+
 export default function DepartmentsPage() {
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isAddDeptOpen, setIsAddDeptOpen] = useState(false);
   const [isEditDeptOpen, setIsEditDeptOpen] = useState(false);
   const [isViewDeptOpen, setIsViewDeptOpen] = useState(false);
@@ -31,25 +31,74 @@ export default function DepartmentsPage() {
   const [selectedDept, setSelectedDept] = useState(null);
   const [viewDept, setViewDept] = useState(null);
   const [deleteDept, setDeleteDept] = useState(null);
-  const totalStudents = departments.reduce((sum, d) => sum + d.students, 0);
-  const totalLecturers = departments.reduce((sum, d) => sum + d.lecturers, 0);
+
+  const loadDepartments = async () => {
+    try {
+      setLoading(true);
+      const data = await getAcademicDepartments();
+      setDepartments(data.departments || []);
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load departments.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
+  const totalStudents = useMemo(() => departments.reduce((sum, department) => sum + Number(department.students || 0), 0), [departments]);
+  const totalLecturers = useMemo(() => departments.reduce((sum, department) => sum + Number(department.lecturers || 0), 0), [departments]);
+
   const handleEditDept = (dept) => {
     setSelectedDept(dept);
     setIsEditDeptOpen(true);
   };
+
   const handleViewDept = (dept) => {
     setViewDept(dept);
     setIsViewDeptOpen(true);
   };
+
   const handleDeleteDept = (dept) => {
     setDeleteDept(dept);
     setIsDeleteDeptOpen(true);
   };
+
   const confirmDeleteDept = async () => {
-    if (deleteDept) {
+    if (!deleteDept) return;
+    try {
+      await deleteAcademicDepartment(deleteDept.id);
       toast.success('Department Deleted', { description: `${deleteDept.name} has been deleted successfully` });
+      setIsDeleteDeptOpen(false);
+      setDeleteDept(null);
+      await loadDepartments();
+    } catch (error) {
+      toast.error('Delete Failed', { description: error?.response?.data?.message || 'Failed to delete department.' });
     }
   };
+
+  const handleCreateDepartment = async (data) => {
+    try {
+      await createAcademicDepartment(data);
+      await loadDepartments();
+    } catch (error) {
+      toast.error('Create Failed', { description: error?.response?.data?.message || 'Failed to create department.' });
+      throw error;
+    }
+  };
+
+  const handleUpdateDepartment = async (data) => {
+    try {
+      await updateAcademicDepartment(data.id, data);
+      await loadDepartments();
+    } catch (error) {
+      toast.error('Update Failed', { description: error?.response?.data?.message || 'Failed to update department.' });
+      throw error;
+    }
+  };
+
   const deptColumns = [
   { key: 'name', label: 'Department', sortable: true },
   { key: 'faculty', label: 'Faculty' },
@@ -78,9 +127,9 @@ export default function DepartmentsPage() {
           </Button>
         </div>
   }];
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Departments</h1>
@@ -91,89 +140,27 @@ export default function DepartmentsPage() {
           <span className="hidden sm:inline">Add Department</span>
         </Button>
       </div>
-      {/* Stats */}
+
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{departments.length}</p>
-                <p className="text-xs text-muted-foreground">Departments</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalStudents.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Students</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <UserCog className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalLecturers}</p>
-                <p className="text-xs text-muted-foreground">Total Lecturers</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <BookOpen className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold">{departments.reduce((sum, d) => sum + d.courses, 0)}</p>
-                <p className="text-xs text-muted-foreground">Total Courses</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Building2 className="h-5 w-5 text-primary" /></div><div><p className="text-xl sm:text-2xl font-bold">{departments.length}</p><p className="text-xs text-muted-foreground">Departments</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Users className="h-5 w-5 text-blue-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{totalStudents.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Students</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><UserCog className="h-5 w-5 text-green-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{totalLecturers}</p><p className="text-xs text-muted-foreground">Total Lecturers</p></div></div></CardContent></Card>
+        <Card className="transition-all hover:shadow-md"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><BookOpen className="h-5 w-5 text-yellow-600" /></div><div><p className="text-xl sm:text-2xl font-bold">{departments.reduce((sum, department) => sum + Number(department.courses || 0), 0)}</p><p className="text-xs text-muted-foreground">Total Courses</p></div></div></CardContent></Card>
       </div>
-      {/* Table */}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm sm:text-base font-medium">All Departments</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <DataTable
-            columns={deptColumns}
-            data={departments}
-            searchPlaceholder="Search departments..."
-            pageSize={10} />
+          {loading ? <div className="py-8 text-sm text-muted-foreground">Loading departments...</div> :
+          <DataTable columns={deptColumns} data={departments} searchPlaceholder="Search departments..." pageSize={10} />}
         </CardContent>
       </Card>
-      {/* Add Department Modal */}
-      <AddDepartmentModal
-        open={isAddDeptOpen}
-        onOpenChange={setIsAddDeptOpen} />
-      {/* Edit Department Modal */}
-      <EditDepartmentModal
-        open={isEditDeptOpen}
-        onOpenChange={setIsEditDeptOpen}
-        department={selectedDept} />
-      {/* View Department Modal */}
-      <ViewDepartmentModal
-        open={isViewDeptOpen}
-        onOpenChange={setIsViewDeptOpen}
-        department={viewDept} />
-      {/* Delete Department Confirmation */}
+
+      <AddDepartmentModal open={isAddDeptOpen} onOpenChange={setIsAddDeptOpen} onSubmit={handleCreateDepartment} />
+      <EditDepartmentModal open={isEditDeptOpen} onOpenChange={setIsEditDeptOpen} department={selectedDept} onSubmit={handleUpdateDepartment} />
+      <ViewDepartmentModal open={isViewDeptOpen} onOpenChange={setIsViewDeptOpen} department={viewDept} />
       <ConfirmModal
         open={isDeleteDeptOpen}
         onOpenChange={setIsDeleteDeptOpen}

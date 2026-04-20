@@ -10,8 +10,11 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportToCSV } from '@/lib/export-utils';
 import { printTranscript, printFeeStatement } from '@/lib/print-utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ViewCourseModal } from '@/components/modals';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { getStudentDashboard } from '@/services/studentDashboardService';
 import {
   Wallet,
   BookOpen,
@@ -28,61 +31,70 @@ import {
   Eye
 } from
   'lucide-react';
-// Mock data for student dashboard
-const gpaProgress = [
-  { semester: 'Sem 1', gpa: 3.2, credits: 18 },
-  { semester: 'Sem 2', gpa: 3.4, credits: 18 },
-  { semester: 'Sem 3', gpa: 3.1, credits: 21 },
-  { semester: 'Sem 4', gpa: 3.5, credits: 21 },
-  { semester: 'Sem 5', gpa: 3.6, credits: 18 }];
-const semesterPerformance = [
-  { unit: 'CS 301', score: 78 },
-  { unit: 'CS 305', score: 72 },
-  { unit: 'CS 310', score: 85 },
-  { unit: 'CS 315', score: 68 },
-  { unit: 'GS 300', score: 82 }];
-const registeredUnits = [
-  { id: 1, code: 'CS 301', name: 'Database Systems', lecturer: 'Dr. J. Kiprop', credits: 3, day: 'Monday', time: '8:00 AM', room: 'LH 201', status: 'Active', department: 'Computer Science', students: 120, semester: 'Semester 6', description: 'Concepts of database management systems, relational databases, and SQL.' },
-  { id: 2, code: 'CS 305', name: 'Software Engineering', lecturer: 'Prof. M. Ochieng', credits: 3, day: 'Tuesday', time: '10:00 AM', room: 'LH 105', status: 'Active', department: 'Computer Science', students: 115, semester: 'Semester 6', description: 'Principles of software development, modeling, and project management.' },
-  { id: 3, code: 'CS 310', name: 'Computer Networks', lecturer: 'Dr. P. Wanjiku', credits: 3, day: 'Wednesday', time: '2:00 PM', room: 'Lab 3', status: 'Active', department: 'Computer Science', students: 105, semester: 'Semester 6', description: 'Data communication principles, network protocols, and architectures.' },
-  { id: 4, code: 'CS 315', name: 'Operating Systems', lecturer: 'Dr. K. Mwangi', credits: 3, day: 'Thursday', time: '8:00 AM', room: 'LH 201', status: 'Active', department: 'Computer Science', students: 118, semester: 'Semester 6', description: 'Internal structure of operating systems, memory management, and process scheduling.' },
-  { id: 5, code: 'GS 300', name: 'Communication Skills', lecturer: 'Ms. A. Njeri', credits: 2, day: 'Friday', time: '10:00 AM', room: 'LH 301', status: 'Active', department: 'General Studies', students: 300, semester: 'Semester 6', description: 'Developing effective oral and written communication skills for academic and professional contexts.' }];
-const recentResults = [
-  { id: 1, unit: 'CS 201', name: 'Data Structures', cat: 25, exam: 53, total: 78, grade: 'A', points: 4.0 },
-  { id: 2, unit: 'CS 205', name: 'OOP with Java', cat: 22, exam: 48, total: 70, grade: 'B+', points: 3.5 },
-  { id: 3, unit: 'CS 210', name: 'Web Development', cat: 28, exam: 52, total: 80, grade: 'A', points: 4.0 },
-  { id: 4, unit: 'MA 201', name: 'Statistics', cat: 20, exam: 45, total: 65, grade: 'B', points: 3.0 },
-  { id: 5, unit: 'CS 215', name: 'Computer Architecture', cat: 24, exam: 48, total: 72, grade: 'B+', points: 3.5 }];
-const paymentHistory = [
-  { id: 1, date: '2024-01-10', description: 'Tuition Fee - Sem 2', amount: 45000, method: 'M-Pesa', reference: 'QKL2X4Y8N', status: 'Completed' },
-  { id: 2, date: '2023-12-15', description: 'Library Fee', amount: 5000, method: 'M-Pesa', reference: 'RHJ7K9M2P', status: 'Completed' },
-  { id: 3, date: '2023-11-20', description: 'Tuition Fee - Sem 1', amount: 50000, method: 'Bank', reference: 'BNK89012345', status: 'Completed' },
-  { id: 4, date: '2023-09-05', description: 'Registration Fee', amount: 10000, method: 'M-Pesa', reference: 'ABC1D2E3F', status: 'Completed' }];
-const upcomingDeadlines = [
-  { id: 1, title: 'Fee Payment Deadline', date: 'Mar 15, 2024', type: 'finance', urgent: true, description: 'Final deadline for semester fees' },
-  { id: 2, title: 'CS 305 Assignment', date: 'Mar 18, 2024', type: 'academic', urgent: false, description: 'Submit via e-learning portal' },
-  { id: 3, title: 'CAT 2 Exams Begin', date: 'Mar 25, 2024', type: 'exam', urgent: false, description: 'All registered units' },
-  { id: 4, title: 'Unit Registration Closes', date: 'Mar 30, 2024', type: 'deadline', urgent: true, description: 'Last day for add/drop' }];
-const examSchedule = [
-  { id: 1, date: 'May 13, 2024', time: '8:00 AM', unit: 'CS 301', venue: 'Exam Hall A', seat: 'A-45' },
-  { id: 2, date: 'May 15, 2024', time: '2:00 PM', unit: 'CS 305', venue: 'Exam Hall B', seat: 'B-23' },
-  { id: 3, date: 'May 17, 2024', time: '8:00 AM', unit: 'CS 310', venue: 'Exam Hall A', seat: 'A-45' },
-  { id: 4, date: 'May 20, 2024', time: '2:00 PM', unit: 'CS 315', venue: 'Exam Hall C', seat: 'C-12' },
-  { id: 5, date: 'May 22, 2024', time: '8:00 AM', unit: 'GS 300', venue: 'Exam Hall B', seat: 'B-23' }];
-const notifications = [
-  { id: 1, title: 'Fee Balance Reminder', message: 'Your fee balance of KES 45,000 is due by Mar 15', time: '2 hours ago', type: 'warning' },
-  { id: 2, title: 'Exam Timetable Published', message: 'Final exam schedule for Sem 2 2023/24 is now available', time: '1 day ago', type: 'info' },
-  { id: 3, title: 'CS 305 Assignment Posted', message: 'New assignment due Mar 18, 2024', time: '2 days ago', type: 'info' },
-  { id: 4, title: 'Results Released', message: 'Sem 1 2023/24 results are now available', time: '1 week ago', type: 'success' }];
-const pendingDocuments = [
-  { id: 1, document: 'Student ID Card', status: 'Ready for Collection', location: 'Registry Office' },
-  { id: 2, document: 'Exam Card', status: 'Pending Fee Clearance', location: 'Finance Office' },
-  { id: 3, document: 'Medical Insurance Card', status: 'Processing', location: 'Student Welfare' }];
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardError, setDashboardError] = useState('');
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const { notifications, loadingNotifications, notificationsError } = useNotifications();
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadDashboard = async () => {
+      try {
+        if (!ignore) {
+          setDashboardLoading(true);
+          setDashboardError('');
+        }
+
+        const data = await getStudentDashboard();
+
+        if (!ignore) {
+          setDashboardData(data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setDashboardData(null);
+          setDashboardError(error?.response?.data?.message || 'Failed to load student dashboard.');
+        }
+      } finally {
+        if (!ignore) {
+          setDashboardLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const studentProfile = dashboardData?.profile;
+  const summary = dashboardData?.summary ?? {
+    feeBalance: 0,
+    totalFees: 0,
+    paidAmount: 0,
+    feePercentage: 0,
+    registeredUnitsCount: 0,
+    currentCgpa: null,
+    totalCredits: null,
+    upcomingExamsCount: 0,
+  };
+  const livePaymentHistory = Array.isArray(dashboardData?.paymentHistory) ? dashboardData.paymentHistory : [];
+  const liveDeadlines = Array.isArray(dashboardData?.deadlines) ? dashboardData.deadlines : [];
+  const liveExamSchedule = Array.isArray(dashboardData?.examSchedule) ? dashboardData.examSchedule : [];
+  const liveRegisteredUnits = Array.isArray(dashboardData?.registeredUnits) ? dashboardData.registeredUnits : [];
+  const liveGpaProgress = Array.isArray(dashboardData?.gpaProgress) ? dashboardData.gpaProgress : [];
+  const liveSemesterPerformance = Array.isArray(dashboardData?.semesterPerformance) ? dashboardData.semesterPerformance : [];
+  const liveRecentResults = Array.isArray(dashboardData?.recentResults) ? dashboardData.recentResults : [];
+  const liveDocuments = Array.isArray(dashboardData?.documents) ? dashboardData.documents : [];
 
   const handleViewCourse = (course) => {
     setSelectedCourse(course);
@@ -148,47 +160,47 @@ export default function StudentDashboard() {
     { key: 'unit', label: 'Unit' },
     { key: 'venue', label: 'Venue' },
     { key: 'seat', label: 'Seat No.' }];
-  const feeBalance = 45000;
-  const totalFees = 120000;
-  const feePercentage = (totalFees - feeBalance) / totalFees * 100;
-  const currentCGPA = 3.45;
-  const totalCredits = 96;
+  const feeBalance = summary.feeBalance;
+  const totalFees = summary.totalFees;
+  const feePercentage = summary.feePercentage;
+  const currentCGPA = summary.currentCgpa;
+  const totalCredits = summary.totalCredits;
   const handleDownloadTranscript = () => {
     const transcriptData = {
-      studentName: 'Faith Achieng',
-      studentId: 'CS/2023/045',
-      program: 'BSc Computer Science',
-      faculty: 'School of Computing',
+      studentName: studentProfile?.name || user?.name || 'Student',
+      studentId: studentProfile?.registrationNumber || 'N/A',
+      program: studentProfile?.program || studentProfile?.course || 'N/A',
+      faculty: studentProfile?.faculty || 'N/A',
       dateOfAdmission: 'September 2021',
       status: 'In Progress',
-      semesters: gpaProgress.map((s, i) => ({
+      semesters: liveGpaProgress.map((s) => ({
         name: s.semester,
-        courses: recentResults.map((r) => ({
+        courses: liveRecentResults
+          .filter((r) => r.semester === s.semester)
+          .map((r) => ({
           code: r.unit,
           name: r.name,
-          credits: 3,
+          credits: r.credits || 0,
           grade: r.grade,
           points: r.points
         })),
         gpa: s.gpa
       })),
-      cgpa: currentCGPA,
-      totalCredits: totalCredits
+      cgpa: currentCGPA || 0,
+      totalCredits: totalCredits || 0
     };
     printTranscript(transcriptData);
   };
   const handlePrintFeeStatement = () => {
     printFeeStatement({
-      studentName: 'Faith Achieng',
-      studentId: 'CS/2023/045',
-      program: 'BSc Computer Science',
+      studentName: studentProfile?.name || user?.name || 'Student',
+      studentId: studentProfile?.registrationNumber || 'N/A',
+      program: studentProfile?.program || studentProfile?.course || 'N/A',
       academicYear: '2023/2024',
       feeItems: [
-        { item: 'Tuition Fee', amount: 100000, paid: 55000 },
-        { item: 'Library Fee', amount: 5000, paid: 5000 },
-        { item: 'Registration Fee', amount: 10000, paid: 10000 },
-        { item: 'Medical Fee', amount: 5000, paid: 5000 }],
-      payments: paymentHistory.map((p) => ({
+        { item: 'Total Fees', amount: totalFees, paid: summary.paidAmount },
+      ],
+      payments: livePaymentHistory.map((p) => ({
         date: p.date,
         reference: p.reference,
         method: p.method,
@@ -202,11 +214,11 @@ export default function StudentDashboard() {
         <div>
           <h1 className="h1-page mb-1">My Dashboard</h1>
           <p className="body-md text-muted-foreground flex items-center gap-2">
-            Welcome back, <span className="font-semibold text-foreground">Faith Achieng</span>
+            Welcome back, <span className="font-semibold text-foreground">{studentProfile?.name || user?.name || 'Student'}</span>
             <span className="w-1 h-1 rounded-full bg-border" />
-            CS/2023/045
+            {studentProfile?.registrationNumber || 'Profile syncing'}
             <span className="w-1 h-1 rounded-full bg-border" />
-            Year 3
+            {studentProfile?.year ? `Year ${studentProfile.year}` : 'Student'}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -225,28 +237,42 @@ export default function StudentDashboard() {
         <StatsCard
           title="Fee Balance"
           value={`KES ${feeBalance.toLocaleString()}`}
-          change="Due: Mar 15, 2024"
-          changeType="negative"
+          change={feeBalance > 0 ? 'Outstanding balance from backend records' : 'Fully cleared'}
+          changeType={feeBalance > 0 ? 'negative' : 'positive'}
           icon={Wallet} />
         <StatsCard
           title="Registered Units"
-          value="5"
-          change="14 credits this semester"
+          value={summary.registeredUnitsCount}
+          change={summary.registeredUnitsCount > 0 ? 'Live academic registrations returned' : 'No registered units in backend records'}
           changeType="neutral"
           icon={BookOpen} />
         <StatsCard
           title="Current CGPA"
-          value={currentCGPA.toFixed(2)}
-          change="2nd Class Upper Division"
+          value={typeof currentCGPA === 'number' ? currentCGPA.toFixed(2) : 'N/A'}
+          change="Computed from backend academic records"
           changeType="positive"
           icon={GraduationCap} />
         <StatsCard
           title="Upcoming Exams"
-          value="5"
-          change="Starting May 13"
+          value={summary.upcomingExamsCount}
+          change={summary.upcomingExamsCount > 0 ? 'From scheduled backend events' : 'No upcoming exam events'}
           changeType="neutral"
           icon={Calendar} />
       </div>
+      {dashboardLoading && (
+        <Card className="border-dashed">
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            Loading live student dashboard data...
+          </CardContent>
+        </Card>
+      )}
+      {dashboardError && (
+        <Card className="border-destructive/30">
+          <CardContent className="p-4 text-sm text-destructive">
+            {dashboardError}
+          </CardContent>
+        </Card>
+      )}
       {/* Fee Progress */}
       <Card className="glass-premium overflow-hidden">
         <CardHeader className="pb-4 pt-6">
@@ -261,7 +287,7 @@ export default function StudentDashboard() {
         <CardContent className="pb-8">
           <div className="space-y-4">
             <div className="flex justify-between text-sm font-medium">
-              <span className="text-foreground">KES {(totalFees - feeBalance).toLocaleString()} paid</span>
+              <span className="text-foreground">KES {summary.paidAmount.toLocaleString()} paid</span>
               <span className="text-muted-foreground">Goal: KES {totalFees.toLocaleString()}</span>
             </div>
             <Progress value={feePercentage} className="h-3 shadow-premium" />
@@ -279,8 +305,8 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-green-600/70">Current CGPA</p>
-                <p className="text-3xl font-black text-green-600">{currentCGPA.toFixed(2)}</p>
-                <p className="text-xs font-medium text-green-600/60 mt-2">2nd Class Upper Division</p>
+                <p className="text-3xl font-black text-green-600">{typeof currentCGPA === 'number' ? currentCGPA.toFixed(2) : 'N/A'}</p>
+                <p className="text-xs font-medium text-green-600/60 mt-2">Live academic CGPA from backend records</p>
               </div>
               <div className="p-4 rounded-2xl bg-white shadow-xl shadow-green-500/10">
                 <GraduationCap className="h-7 w-7 text-green-600" />
@@ -293,14 +319,14 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-primary/70">Total Credits</p>
-                <p className="text-3xl font-black text-primary">{totalCredits}</p>
-                <p className="text-xs font-medium text-primary/60 mt-2">of 144 required</p>
+                <p className="text-3xl font-black text-primary">{typeof totalCredits === 'number' ? totalCredits : 'N/A'}</p>
+                <p className="text-xs font-medium text-primary/60 mt-2">Live credit totals from backend records</p>
               </div>
               <div className="p-4 rounded-2xl bg-white shadow-xl shadow-primary/10">
                 <BookOpen className="h-7 w-7 text-primary" />
               </div>
             </div>
-            <Progress value={totalCredits / 144 * 100} className="h-1.5 mt-4 bg-primary/10" />
+            <Progress value={typeof totalCredits === 'number' ? totalCredits / 144 * 100 : 0} className="h-1.5 mt-4 bg-primary/10" />
           </CardContent>
         </Card>
         <Card className="card-hover border-none bg-linear-to-br from-yellow-500/10 to-transparent">
@@ -308,8 +334,8 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-xs font-bold uppercase tracking-widest text-yellow-600/70">Semester Status</p>
-                <p className="text-3xl font-black text-yellow-600">06</p>
-                <p className="text-xs font-medium text-yellow-600/60 mt-2">Final stretch: 2 more to go</p>
+                <p className="text-3xl font-black text-yellow-600">{studentProfile?.year ? `0${studentProfile.year}`.slice(-2) : 'N/A'}</p>
+                <p className="text-xs font-medium text-yellow-600/60 mt-2">{studentProfile?.program || 'Program information from backend profile'}</p>
               </div>
               <div className="p-4 rounded-2xl bg-white shadow-xl shadow-yellow-500/10">
                 <Clock className="h-7 w-7 text-yellow-600" />
@@ -328,15 +354,17 @@ export default function StudentDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-bold">Registered Units</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-0.5">Semester 6 Academic Year 2023/2024</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Live academic registrations from the backend</p>
                 </div>
-                <Badge variant="secondary" className="px-3 py-1 font-bold">5 UNITS • 14 CREDITS</Badge>
+                <Badge variant="secondary" className="px-3 py-1 font-bold">
+                  {liveRegisteredUnits.length} UNITS • {liveRegisteredUnits.reduce((sum, unit) => sum + Number(unit.credits || 0), 0)} CREDITS
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <DataTable
                 columns={unitColumns}
-                data={registeredUnits}
+                data={liveRegisteredUnits}
                 searchable={false}
                 pageSize={6} />
             </CardContent>
@@ -353,7 +381,7 @@ export default function StudentDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {upcomingDeadlines.map((item) =>
+              {liveDeadlines.map((item) =>
                 <div
                   key={item.id}
                   className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-md ${item.urgent ? 'bg-destructive/5 border border-destructive/10' : 'bg-muted/30 border border-transparent'}`
@@ -373,6 +401,9 @@ export default function StudentDashboard() {
                   }
                 </div>
               )}
+              {!dashboardLoading && liveDeadlines.length === 0 && (
+                <div className="text-sm text-muted-foreground">No upcoming deadlines available from the backend.</div>
+              )}
             </CardContent>
           </Card>
           {/* Notifications */}
@@ -383,10 +414,16 @@ export default function StudentDashboard() {
                   <Bell className="h-4 w-4 text-primary" />
                   Activity
                 </CardTitle>
-                <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:text-primary hover:bg-primary/5 px-2 h-7" onClick={() => toast.info('All Notifications', { description: 'Full notification center coming soon' })}>View All</Button>
+                <Button variant="ghost" size="sm" className="text-xs font-bold text-primary hover:text-primary hover:bg-primary/5 px-2 h-7" onClick={() => navigate('/profile')}>View All</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {loadingNotifications && (
+                <div className="text-sm text-muted-foreground">Loading notifications...</div>
+              )}
+              {notificationsError && (
+                <div className="text-sm text-destructive">{notificationsError}</div>
+              )}
               {notifications.slice(0, 3).map((notification) =>
                 <div key={notification.id} className="flex items-start gap-4 group cursor-pointer">
                   <div className={`w-2 h-2 rounded-full mt-2 shrink-0 animate-pulse ${notification.type === 'warning' ? 'bg-yellow-500' :
@@ -395,10 +432,13 @@ export default function StudentDashboard() {
                   } />
                   <div className="flex-1 border-b border-border/40 pb-3 group-last:border-0 group-last:pb-0">
                     <p className="text-sm font-bold group-hover:text-primary transition-colors">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{notification.description}</p>
                     <p className="text-[10px] font-bold text-muted-foreground/60 mt-1.5 uppercase tracking-wide">{notification.time}</p>
                   </div>
                 </div>
+              )}
+              {!loadingNotifications && !notificationsError && notifications.length === 0 && (
+                <div className="text-sm text-muted-foreground">No notifications available from the backend.</div>
               )}
             </CardContent>
           </Card>
@@ -408,12 +448,12 @@ export default function StudentDashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <AreaChartCard
           title="GPA Progress Over Semesters"
-          data={gpaProgress}
+          data={liveGpaProgress}
           dataKey="gpa"
           xAxisKey="semester" />
         <BarChartCard
           title="Current Semester Performance"
-          data={semesterPerformance}
+          data={liveSemesterPerformance}
           dataKeys={['score']}
           xAxisKey="unit" />
       </div>
@@ -429,11 +469,13 @@ export default function StudentDashboard() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Semester 5 Results</CardTitle>
+                <CardTitle className="text-base font-medium">Latest Published Results</CardTitle>
                 <div className="flex gap-2">
-                  <Badge variant="secondary">GPA: 3.6</Badge>
+                  <Badge variant="secondary">
+                    GPA: {liveGpaProgress.length > 0 ? liveGpaProgress[liveGpaProgress.length - 1].gpa.toFixed(2) : 'N/A'}
+                  </Badge>
                   <Button variant="outline" size="sm" onClick={() => {
-                    exportToCSV({ data: recentResults, filename: 'semester-results' });
+                    exportToCSV({ data: liveRecentResults, filename: 'semester-results' });
                   }}>
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -444,7 +486,7 @@ export default function StudentDashboard() {
             <CardContent>
               <DataTable
                 columns={resultsColumns}
-                data={recentResults}
+                data={liveRecentResults}
                 searchable={false}
                 pageSize={6} />
             </CardContent>
@@ -453,7 +495,7 @@ export default function StudentDashboard() {
         <TabsContent value="payments">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-medium">Payment History</CardTitle>
                 <Button variant="outline" size="sm" onClick={handlePrintFeeStatement}>
                   <Download className="h-4 w-4 mr-2" />
@@ -464,7 +506,7 @@ export default function StudentDashboard() {
             <CardContent>
               <DataTable
                 columns={paymentColumns}
-                data={paymentHistory}
+                data={livePaymentHistory}
                 searchPlaceholder="Search payments..."
                 pageSize={5}
                 exportable />
@@ -475,7 +517,7 @@ export default function StudentDashboard() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Final Exam Timetable - May 2024</CardTitle>
+                <CardTitle className="text-base font-medium">Upcoming Exam Schedule</CardTitle>
                 <Button variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-2" />
                   Download Timetable
@@ -485,7 +527,7 @@ export default function StudentDashboard() {
             <CardContent>
               <DataTable
                 columns={examColumns}
-                data={examSchedule}
+                data={liveExamSchedule}
                 searchable={false}
                 pageSize={6} />
             </CardContent>
@@ -497,7 +539,7 @@ export default function StudentDashboard() {
               <CardTitle className="text-base font-medium">Pending Documents</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {pendingDocuments.map((doc) =>
+              {liveDocuments.map((doc) =>
                 <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-muted-foreground" />
@@ -517,6 +559,9 @@ export default function StudentDashboard() {
                     {doc.status}
                   </Badge>
                 </div>
+              )}
+              {!dashboardLoading && liveDocuments.length === 0 && (
+                <div className="text-sm text-muted-foreground">No pending documents available from the backend.</div>
               )}
             </CardContent>
           </Card>

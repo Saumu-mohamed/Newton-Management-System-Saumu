@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DataTable, StatusBadge } from '@/components/dashboard/DataTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,23 +19,42 @@ import {
   AddStaffModal,
   ConfirmModal } from
 '@/components/modals';
-const initialStaffList = [
-{ id: 1, name: 'Dr. James Kiprop', email: 'j.kiprop@cms.edu', phone: '+254 722 123 456', department: 'Computer Science', position: 'Senior Lecturer', status: 'Active' },
-{ id: 2, name: 'Prof. Susan Wanjiku', email: 's.wanjiku@cms.edu', phone: '+254 733 234 567', department: 'Electrical Eng.', position: 'Professor', status: 'Active' },
-{ id: 3, name: 'Dr. Peter Kamau', email: 'p.kamau@cms.edu', phone: '+254 722 345 678', department: 'Civil Engineering', position: 'HOD', status: 'Active' },
-{ id: 4, name: 'Grace Muthoni', email: 'g.muthoni@cms.edu', phone: '+254 711 456 789', department: 'Finance', position: 'Finance Officer', status: 'Active' },
-{ id: 5, name: 'Peter Ochieng', email: 'p.ochieng@cms.edu', phone: '+254 722 567 890', department: 'Registry', position: 'Registrar', status: 'Active' },
-{ id: 6, name: 'Mary Wanjiku', email: 'm.wanjiku@cms.edu', phone: '+254 733 678 901', department: 'Administration', position: 'College Admin', status: 'Active' },
-{ id: 7, name: 'Anne Muthoni', email: 'a.muthoni@cms.edu', phone: '+254 722 789 012', department: 'Library', position: 'Librarian', status: 'Active' },
-{ id: 8, name: 'Samuel Otieno', email: 's.otieno@cms.edu', phone: '+254 711 890 123', department: 'IT', position: 'IT Administrator', status: 'Active' }];
+import { exportToCSV } from '@/lib/export-utils';
+import {
+  createStaffRecord,
+  deleteStaffRecord,
+  getStaffRecords,
+  updateStaffRecord } from
+'@/services/adminUtilityService';
+
 export default function StaffPage() {
-  const [staffList, setStaffList] = useState(initialStaffList);
+  const [staffList, setStaffList] = useState([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, departments: 0 });
+  const [loading, setLoading] = useState(true);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
+
+  const loadStaff = async () => {
+    try {
+      setLoading(true);
+      const data = await getStaffRecords();
+      setStaffList(data.staff || []);
+      setStats(data.stats || { total: 0, active: 0, departments: 0 });
+    } catch (error) {
+      toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load staff records.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStaff();
+  }, []);
+
   const handleView = (staff) => {
     setSelectedStaff(staff);
     setIsViewOpen(true);
@@ -48,18 +67,25 @@ export default function StaffPage() {
     setDeleteItem(staff);
     setIsDeleteOpen(true);
   };
-  const confirmDelete = () => {
-    if (deleteItem) {
-      setStaffList(staffList.filter((s) => s.id !== deleteItem.id));
+  const confirmDelete = async () => {
+    if (!deleteItem) return;
+    try {
+      await deleteStaffRecord(deleteItem.id);
       toast.success('Staff Deleted', { description: `${deleteItem.name} has been removed.` });
+      setIsDeleteOpen(false);
+      setDeleteItem(null);
+      await loadStaff();
+    } catch (error) {
+      toast.error('Delete Failed', { description: error?.response?.data?.message || 'Failed to delete staff member.' });
     }
   };
-  const handleSave = (data) => {
-    setStaffList(staffList.map((s) => s.id === data.id ? data : s));
+  const handleSave = async (data) => {
+    await updateStaffRecord(data.id, data);
+    await loadStaff();
   };
-  const handleAdd = (data) => {
-    const newStaff = { ...data, id: Math.max(...staffList.map((s) => s.id)) + 1 };
-    setStaffList([...staffList, newStaff]);
+  const handleAdd = async (data) => {
+    await createStaffRecord(data);
+    await loadStaff();
   };
   const staffColumns = [
   { key: 'name', label: 'Name', sortable: true },
@@ -101,7 +127,7 @@ export default function StaffPage() {
           <p className="text-sm text-muted-foreground">Manage all staff members across departments</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.success('Exporting', { description: 'Exporting staff list...' })}>
+          <Button variant="outline" size="sm" onClick={() => exportToCSV({ data: staffList, filename: 'staff-directory' })}>
             <Download className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">Export</span>
           </Button>
@@ -120,7 +146,7 @@ export default function StaffPage() {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-bold">{staffList.length}</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.total}</p>
                 <p className="text-xs text-muted-foreground">Total Staff</p>
               </div>
             </div>
@@ -133,7 +159,7 @@ export default function StaffPage() {
                 <UserCog className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-bold">{staffList.filter((s) => s.status === 'Active').length}</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.active}</p>
                 <p className="text-xs text-muted-foreground">Active</p>
               </div>
             </div>
@@ -146,7 +172,7 @@ export default function StaffPage() {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-bold">5</p>
+                <p className="text-xl sm:text-2xl font-bold">{stats.departments}</p>
                 <p className="text-xs text-muted-foreground">Departments</p>
               </div>
             </div>
@@ -159,12 +185,15 @@ export default function StaffPage() {
           <CardTitle className="text-sm sm:text-base font-medium">All Staff</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
+          {loading ?
+          <div className="py-8 text-sm text-muted-foreground">Loading staff records...</div> :
           <DataTable
             columns={staffColumns}
             data={staffList}
             searchPlaceholder="Search staff..."
             pageSize={10}
             exportable />
+          }
         </CardContent>
       </Card>
       {/* Modals */}

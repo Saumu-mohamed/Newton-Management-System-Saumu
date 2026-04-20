@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,12 +22,53 @@ import {
   SelectTrigger,
   SelectValue } from
 '@/components/ui/select';
+import { getSettings, updateSettings } from '@/services/adminUtilityService';
+
 export default function SettingsPage() {
-  const handleSave = (section) => {
-    toast.success('Settings Saved', {
-      description: `${section} settings have been updated`
-    });
+  const [settings, setSettings] = useState(null);
+  const [savingSection, setSavingSection] = useState('');
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await getSettings();
+        setSettings(data.settings);
+      } catch (error) {
+        toast.error('Load Failed', { description: error?.response?.data?.message || 'Failed to load settings.' });
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  const patchSection = (section, key, value) => {
+    setSettings((current) => ({
+      ...current,
+      [section]: {
+        ...current?.[section],
+        [key]: value
+      }
+    }));
   };
+
+  const handleSave = async (section, payload) => {
+    try {
+      setSavingSection(section);
+      const response = await updateSettings(payload);
+      setSettings(response.settings);
+      toast.success('Settings Saved', {
+        description: `${section} settings have been updated`
+      });
+    } catch (error) {
+      toast.error('Save Failed', { description: error?.response?.data?.message || 'Failed to save settings.' });
+    } finally {
+      setSavingSection('');
+    }
+  };
+
+  if (!settings) {
+    return <div className="py-8 text-sm text-muted-foreground">Loading settings...</div>;
+  }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -56,22 +98,22 @@ export default function SettingsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="institution">Institution Name</Label>
-                    <Input id="institution" defaultValue="Kenya College of Technology" />
+                    <Input id="institution" value={settings.institution?.name || ''} onChange={(event) => patchSection('institution', 'name', event.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="abbreviation">Abbreviation</Label>
-                    <Input id="abbreviation" defaultValue="KCT" />
+                    <Input id="abbreviation" value={settings.institution?.abbreviation || ''} onChange={(event) => patchSection('institution', 'abbreviation', event.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Contact Email</Label>
-                    <Input id="email" type="email" defaultValue="info@kct.ac.ke" />
+                    <Input id="email" type="email" value={settings.institution?.email || ''} onChange={(event) => patchSection('institution', 'email', event.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Contact Phone</Label>
-                    <Input id="phone" defaultValue="+254 20 123 4567" />
+                    <Input id="phone" value={settings.institution?.phone || ''} onChange={(event) => patchSection('institution', 'phone', event.target.value)} />
                   </div>
                 </div>
-                <Button onClick={() => handleSave('Institution')}>
+                <Button disabled={savingSection === 'Institution'} onClick={() => handleSave('Institution', { institution: settings.institution })}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Changes
                 </Button>
@@ -91,15 +133,19 @@ export default function SettingsPage() {
                     <p className="font-medium">Dark Mode</p>
                     <p className="text-sm text-muted-foreground">Enable dark mode theme</p>
                   </div>
-                  <Switch />
+                  <Switch checked={Boolean(settings.appearance?.darkMode)} onCheckedChange={(checked) => patchSection('appearance', 'darkMode', checked)} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Compact Mode</p>
                     <p className="text-sm text-muted-foreground">Reduce spacing for denser UI</p>
                   </div>
-                  <Switch />
+                  <Switch checked={Boolean(settings.appearance?.compactMode)} onCheckedChange={(checked) => patchSection('appearance', 'compactMode', checked)} />
                 </div>
+                <Button disabled={savingSection === 'Appearance'} onClick={() => handleSave('Appearance', { appearance: settings.appearance })}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Appearance
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -116,33 +162,33 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                </div>
-                <Switch defaultChecked />
+                    <p className="font-medium">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                  </div>
+                <Switch checked={Boolean(settings.notifications?.emailNotifications)} onCheckedChange={(checked) => patchSection('notifications', 'emailNotifications', checked)} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">SMS Alerts</p>
-                  <p className="text-sm text-muted-foreground">Receive critical alerts via SMS</p>
-                </div>
-                <Switch />
+                    <p className="font-medium">SMS Alerts</p>
+                    <p className="text-sm text-muted-foreground">Receive critical alerts via SMS</p>
+                  </div>
+                <Switch checked={Boolean(settings.notifications?.smsAlerts)} onCheckedChange={(checked) => patchSection('notifications', 'smsAlerts', checked)} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Payment Alerts</p>
-                  <p className="text-sm text-muted-foreground">Notify on payment transactions</p>
-                </div>
-                <Switch defaultChecked />
+                    <p className="font-medium">Payment Alerts</p>
+                    <p className="text-sm text-muted-foreground">Notify on payment transactions</p>
+                  </div>
+                <Switch checked={Boolean(settings.notifications?.paymentAlerts)} onCheckedChange={(checked) => patchSection('notifications', 'paymentAlerts', checked)} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Registration Alerts</p>
-                  <p className="text-sm text-muted-foreground">Notify on new registrations</p>
-                </div>
-                <Switch defaultChecked />
+                    <p className="font-medium">Registration Alerts</p>
+                    <p className="text-sm text-muted-foreground">Notify on new registrations</p>
+                  </div>
+                <Switch checked={Boolean(settings.notifications?.registrationAlerts)} onCheckedChange={(checked) => patchSection('notifications', 'registrationAlerts', checked)} />
               </div>
-              <Button onClick={() => handleSave('Notification')}>
+              <Button disabled={savingSection === 'Notification'} onClick={() => handleSave('Notification', { notifications: settings.notifications })}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Preferences
               </Button>
@@ -163,7 +209,7 @@ export default function SettingsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Minimum Password Length</Label>
-                    <Select defaultValue="8">
+                    <Select value={String(settings.security?.minPasswordLength || '8')} onValueChange={(value) => patchSection('security', 'minPasswordLength', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -177,7 +223,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Password Expiry</Label>
-                    <Select defaultValue="90">
+                    <Select value={String(settings.security?.passwordExpiryDays || '90')} onValueChange={(value) => patchSection('security', 'passwordExpiryDays', value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -195,16 +241,16 @@ export default function SettingsPage() {
                     <p className="font-medium">Require Special Characters</p>
                     <p className="text-sm text-muted-foreground">At least one special character</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch checked={Boolean(settings.security?.requireSpecialCharacters)} onCheckedChange={(checked) => patchSection('security', 'requireSpecialCharacters', checked)} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Two-Factor Authentication</p>
                     <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
                   </div>
-                  <Switch />
+                  <Switch checked={Boolean(settings.security?.twoFactorAuthRequired)} onCheckedChange={(checked) => patchSection('security', 'twoFactorAuthRequired', checked)} />
                 </div>
-                <Button onClick={() => handleSave('Security')}>
+                <Button disabled={savingSection === 'Security'} onClick={() => handleSave('Security', { security: settings.security })}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Security Settings
                 </Button>
@@ -220,7 +266,7 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Session Timeout</Label>
-                  <Select defaultValue="30">
+                  <Select value={String(settings.security?.sessionTimeoutMinutes || '30')} onValueChange={(value) => patchSection('security', 'sessionTimeoutMinutes', value)}>
                     <SelectTrigger className="w-48">
                       <SelectValue />
                     </SelectTrigger>
@@ -247,11 +293,11 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Current Academic Year</Label>
-                  <Select defaultValue="2023-2024">
-                    <SelectTrigger>
-                      <SelectValue />
+                  <div className="space-y-2">
+                    <Label>Current Academic Year</Label>
+                    <Select value={settings.academic?.academicYear || '2024-2025'} onValueChange={(value) => patchSection('academic', 'academicYear', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="2023-2024">2023/2024</SelectItem>
@@ -261,7 +307,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Current Semester</Label>
-                  <Select defaultValue="2">
+                  <Select value={String(settings.academic?.semester || '2')} onValueChange={(value) => patchSection('academic', 'semester', value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -274,7 +320,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Grading System</Label>
-                  <Select defaultValue="points">
+                  <Select value={settings.academic?.gradingSystem || 'points'} onValueChange={(value) => patchSection('academic', 'gradingSystem', value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -286,7 +332,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Pass Mark (%)</Label>
-                  <Input type="number" defaultValue="40" />
+                  <Input type="number" value={settings.academic?.passMark || 40} onChange={(event) => patchSection('academic', 'passMark', Number(event.target.value))} />
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -294,9 +340,9 @@ export default function SettingsPage() {
                   <p className="font-medium">Allow Late Registration</p>
                   <p className="text-sm text-muted-foreground">Allow students to register after deadline</p>
                 </div>
-                <Switch />
+                <Switch checked={Boolean(settings.academic?.allowLateRegistration)} onCheckedChange={(checked) => patchSection('academic', 'allowLateRegistration', checked)} />
               </div>
-              <Button onClick={() => handleSave('Academic')}>
+              <Button disabled={savingSection === 'Academic'} onClick={() => handleSave('Academic', { academic: settings.academic })}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Academic Settings
               </Button>

@@ -1,55 +1,96 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import axios from "axios";
 import { ROLE_ROUTES } from "@/types/auth.js";
-import { loginUser, changeUserPassword } from "@/services/authServices.js";
+import {
+  changeUserPassword,
+  clearStoredAuth,
+  getCurrentUser,
+  getStoredToken,
+  getStoredUser,
+  loginUser,
+  logoutUser,
+  persistAuth,
+  updateUserProfile
+} from "@/services/authServices.js";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-
-  const [authState, setAuthState] = useState(() => {
-
-    const storedUser = localStorage.getItem("cms_user");
-    const storedToken = localStorage.getItem("cms_token");
-
-    if (storedUser && storedToken) {
-      return {
-        user: JSON.parse(storedUser),
-        token: storedToken,
-        isAuthenticated: true,
-        isLoading: false
-      };
-    }
-
-    return {
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false
-    };
+  const [authState, setAuthState] = useState({
+    user: getStoredUser(),
+    token: getStoredToken(),
+    isAuthenticated: Boolean(getStoredToken()),
+    isLoading: true
   });
 
   useEffect(() => {
-    if (authState.token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${authState.token}`;
-    } else {
-      delete axios.defaults.headers.common["Authorization"];
-    }
-  }, [authState.token]);
+    let ignore = false;
 
-  // Login function
+    const hydrateAuth = async () => {
+      const token = getStoredToken();
+      const storedUser = getStoredUser();
+
+      if (!token) {
+        if (!ignore) {
+          setAuthState({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false
+          });
+        }
+        return;
+      }
+
+      if (!ignore) {
+        setAuthState((prev) => ({
+          ...prev,
+          user: storedUser,
+          token,
+          isAuthenticated: true,
+          isLoading: true
+        }));
+      }
+
+      try {
+        const data = await getCurrentUser();
+
+        if (!ignore) {
+          setAuthState({
+            user: data.user,
+            token,
+            isAuthenticated: true,
+            isLoading: false
+          });
+        }
+      } catch (_error) {
+        clearStoredAuth();
+
+        if (!ignore) {
+          setAuthState({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false
+          });
+        }
+      }
+    };
+
+    hydrateAuth();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const login = useCallback(async (email, password) => {
-
     try {
-
-      setAuthState(prev => ({ ...prev, isLoading: true }));
+      setAuthState((prev) => ({ ...prev, isLoading: true }));
 
       const data = await loginUser(email, password);
+      const { user, token } = data;
 
-      const { token, user } = data;
-
-      localStorage.setItem("cms_user", JSON.stringify(user));
-      localStorage.setItem("cms_token", token);
+      persistAuth({ user, token });
 
       setAuthState({
         user,
@@ -58,64 +99,102 @@ export const AuthProvider = ({ children }) => {
         isLoading: false
       });
 
-      return { success: true };
-
+      return {
+        success: true,
+        user
+      };
     } catch (error) {
+      clearStoredAuth();
 
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
 
       return {
         success: false,
         error: error.response?.data?.message || "Login failed"
       };
     }
-
   }, []);
 
-  //change password(first login)
   const changePassword = useCallback(async (newPassword) => {
-
     try {
       const data = await changeUserPassword(newPassword);
+
+      setAuthState((prev) => {
+        const nextUser = prev.user ? {
+          ...prev.user,
+          isFirstLogin: false
+        } : prev.user;
+
+        if (nextUser) {
+          persistAuth({ user: nextUser });
+        }
+
+        return {
+          ...prev,
+          user: nextUser
+        };
+      });
 
       return {
         success: true,
         message: data.message
       };
-
     } catch (error) {
-
       return {
         success: false,
         error: error.response?.data?.message || "Password change failed"
       };
     }
-
   }, []);
 
-  // Logout function
+  const updateProfile = useCallback(async (payload) => {
+    try {
+      const data = await updateUserProfile(payload);
+
+      setAuthState((prev) => ({
+        ...prev,
+        user: data.user || prev.user
+      }));
+
+      return {
+        success: true,
+        user: data.user,
+        message: data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || "Profile update failed"
+      };
+    }
+  }, []);
+
   const logout = useCallback(() => {
+    logoutUser().catch(() => null).finally(() => {
+      clearStoredAuth();
 
-    localStorage.removeItem("cms_user");
-    localStorage.removeItem("cms_token");
+      setAuthState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
 
-    setAuthState({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      isLoading: false
+      window.location.href = "/login";
     });
-
-    window.location.href = "/login";
-
   }, []);
 
   const getDashboardRoute = useCallback(() => {
+    if (!authState.user) {
+      return "/login";
+    }
 
-    if (!authState.user) return "/login";
-
-    return ROLE_ROUTES[authState.user.role];
-
+    return ROLE_ROUTES[authState.user.role] || "/login";
   }, [authState.user]);
 
   return (
@@ -125,16 +204,16 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         changePassword,
+        updateProfile,
         getDashboardRoute
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export function useAuth() {
-
   const context = useContext(AuthContext);
 
   if (!context) {

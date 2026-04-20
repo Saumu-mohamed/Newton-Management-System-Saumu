@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { ROLE_ROUTES } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,7 +32,7 @@ export default function Login() {
     setError('');
     const result = await login(email, password);
     if (result.success) {
-      const from = location.state?.from?.pathname || getDashboardRoute();
+      const from = location.state?.from?.pathname || ROLE_ROUTES[result.user?.role] || getDashboardRoute();
       navigate(from, { replace: true });
     } else {
       setError(result.error || 'Login failed');
@@ -161,5 +162,4 @@ export default function Login() {
     </div>
   );
 }
-
 
