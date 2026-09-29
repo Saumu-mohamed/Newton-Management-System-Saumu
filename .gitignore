@@ -32,3 +32,10 @@ coverage/
 
 # Docker
 .dockerignore
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+
